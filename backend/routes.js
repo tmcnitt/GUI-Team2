@@ -111,7 +111,7 @@ module.exports = function routes(app, logger) {
   });
 
 
-  // Users POST /reviews/{userid}
+  // Reviews POST /reviews/{userid}
   app.post("/reviews/:userid", (req, res) => {
     pool.getConnection(function (err, connection) {
       if (err) {
@@ -133,7 +133,7 @@ module.exports = function routes(app, logger) {
               res.status(400).send({ success: false, msg: "Error retrieving Database Information" });
             }
             // throw error if user not found
-            else if (rows[0] == 0) {
+            else if (rows[0]["COUNT(*)"] == 0) {
               logger.error("Error wrong user: \n", err);
               res.status(400).send({ success: false, msg: "Invalid UserId" });
             }
@@ -154,9 +154,7 @@ module.exports = function routes(app, logger) {
               var sql = "INSERT INTO db.reviews (userid, mesg, stars) VALUES (?,?,?)";
 
               connection.query(
-                sql,
-                [userid, mesg, stars],
-                (err) => {
+                sql, [userid, mesg, stars], (err) => {
                   connection.release();
                   if (err) {
                     logger.error("Error Inserting: \n", err);
@@ -167,6 +165,55 @@ module.exports = function routes(app, logger) {
               );
             }
         });
+      }
+    });
+  });
+
+
+  // Reviews GET /reviews/{userid}
+  app.post("/reviews/:userid", (req, res) => {
+    pool.getConnection(function (err, connection) {
+      if (err) {
+        // if there is an issue obtaining a connection, release the connection instance and log the error
+        logger.error("Problem obtaining MySQL connection", err);
+        res.status(400).send("Problem obtaining MySQL connection");
+      } else {
+        const userid = req.params.userid;
+
+        // check if user is in database
+        var sql = "SELECT COUNT(*) FROM db.users WHERE userid = ?";
+
+        connection.query => (
+          sql, [userid], (err, rows) => {
+            connection.release();
+            if (err) {
+              logger.error("Error retrieving Database Information: \n", err);
+              res.status(400).send({ success: false, msg: "Error retrieving Database Information" });
+            }
+
+            // throw error if user not found
+            else if (rows[0]["COUNT(*)"] == 0) {
+              logger.error("Error wrong user: \n", err);
+              res.status(400).send({ success: false, msg: "Invalid UserId" });
+            }
+
+            // return all messages and stars
+            else {
+              var sql = "SELECT * FROM db.reviews WHERE userid = ?";
+
+              connection.query(
+                sql, [userid], (err, rows) => {
+                  connection.release();
+                  if (err) {
+                    logger.error("Error retrieving info: \n", err);
+                    res.status(400).send({ success: false, msg: "Error retrieving from database" });
+                  }
+                  res.status(200).send({ success: true, msg: rows});
+                }
+              );
+            }
+          }
+        );
       }
     });
   });
