@@ -109,4 +109,66 @@ module.exports = function routes(app, logger) {
       }
     });
   });
+
+
+  // Users POST /reviews/{userid}
+  app.post("/reviews/:userid", (req, res) => {
+    pool.getConnection(function (err, connection) {
+      if (err) {
+        // if there is an issue obtaining a connection, release the connection instance and log the error
+        logger.error("Problem obtaining MySQL connection", err);
+        res.status(400).send("Problem obtaining MySQL connection");
+      } else {
+        const userid = req.params.userid;
+
+        // check if user is in database
+        var sql = "SELECT COUNT(*) FROM db.users WHERE userid = ?";
+
+        connection.query => (
+          sql, [userid],
+          (err, rows) => {
+            connection.release();
+            if (err) {
+              logger.error("Error retrieving Database Information: \n", err);
+              res.status(400).send({ success: false, msg: "Error retrieving Database Information" });
+            }
+            // throw error if user not found
+            else if (rows[0] == 0) {
+              logger.error("Error wrong user: \n", err);
+              res.status(400).send({ success: false, msg: "Invalid UserId" });
+            }
+            else {
+              const msg = req.body.msg;
+              const stars = req.body.stars;
+
+              // throw error if message or stars is invalid
+              if (!msg) {
+                logger.error("Error no message", err);
+                res.status(400).send("Invalid Message");
+              }
+              if (!stars) {
+                logger.error("Error wrong format for stars", err);
+                res.status(400).send("Invalid Stars");
+              }
+
+              var sql = "INSERT INTO db.reviews (userid, mesg, stars) VALUES (?,?,?)";
+
+              connection.query(
+                sql,
+                [userid, mesg, stars],
+                (err) => {
+                  connection.release();
+                  if (err) {
+                    logger.error("Error Inserting: \n", err);
+                    res.status(400).send({ success: false, msg: "Error Inserting User, Message, and Stars" });
+                  }
+                  res.status(200).send();
+                }
+              );
+            }
+        });
+      }
+    });
+  });
+
 };
