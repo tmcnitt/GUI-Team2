@@ -1,5 +1,43 @@
 const pool = require("./db");
 const bcrypt = require("bcryptjs");
+const jwt = require('jsonwebtoken');
+const JWT_KEY = "+EjS86shd[yAA>CA+/L*W.9'4b_r2"
+
+const checkJWT =  (token) => {
+  let decoded = jwt.verify(token, JWT_KEY);
+  if (!decoded) {
+    return { success: false }
+  }
+
+  return new Promise((resolve, reject) => {
+    pool.getConnection((err, connection) => {
+      if (err) {
+        return { success: false }
+      }
+  
+      connection.query("SELECT * FROM users WHERE id = ?", [decoded], (err, result) => {
+        if (err) {
+          reject()
+        } else {
+          resolve(result[0])
+        }
+      })
+    })
+  })
+}
+
+const verifyToken = (req) => {
+  const bearerHeader = req.headers['authorization'];
+
+  if (bearerHeader) {
+    const bearer = bearerHeader.split(' ');
+    const bearerToken = bearer[1];
+
+    return checkJWT(bearerToken)
+  } else {
+    return { success: false }
+  }
+}
 
 module.exports = function routes(app, logger) {
   // GET /
@@ -45,12 +83,17 @@ module.exports = function routes(app, logger) {
             connection.query(
               sql,
               [username, hash, type],
-              (err) => {
+              (err, results) => {
                 connection.release();
                 if (err) {
                   error(err);
+                  return;
                 }
-                res.status(200).send();
+                const JWT = jwt.sign(results.insertId, JWT_KEY)
+                res.status(200).send({
+                  success: true,
+                  data: { jwt: JWT }
+                });
               }
             );
           });
@@ -82,20 +125,9 @@ module.exports = function routes(app, logger) {
 
             bcrypt.compare(password, hash, (err, result) => {
               if (result && !err) {
-                sql =
-                  "SELECT username, user_type FROM db.users WHERE username = ?";
-                connection.query(sql, [username], (err, rows) => {
-                  if (err) {
-                    logger.error("Error retrieving information: \n", err);
-                    res
-                      .status(400)
-                      .send(
-                        "Error retrieving login information from database."
-                      );
-                  } else {
-                    res.status(200).send({ success: true, msg: rows[0] });
-                  }
-                });
+                let { username, user_type } = rows[0];
+                const JWT = jwt.sign(rows[0].id, JWT_KEY)
+                res.status(200).send({ success: true, msg: { username, user_type }, data: { jwt: JWT } });
               } else {
                 logger.error("Error no matching password: \n", err);
                 res.status(400).send({
@@ -110,9 +142,18 @@ module.exports = function routes(app, logger) {
     });
   });
 
+  app.get("/users/check", (req, res) => {
+    verifyToken(req).then((user) => {
+      user = { username: user.username, user_type: user.user_type }
+      res.status(200).send(user)
+    }).catch(() => {
+      res.status(400)
+    })
+  })
+
   // Products GET returns all prodcuts
   app.get("/products", (req, res) => {
-    pool.getConnection(function(err, connection) {
+    pool.getConnection(function (err, connection) {
       if (err) {
         // if there is an issue obtaining a connection, release the connection instance and log the error
         logger.error("Problem obtaining MySQL connection", err);
@@ -121,14 +162,14 @@ module.exports = function routes(app, logger) {
         // if there is no issue obtaining a connection, execute query and release connection
         const sql = "SELECT * FROM products"
         connection.query(sql, (err, rows) => {
-          if(err) {
+          if (err) {
             logger.error("Error retrieving products: \n", err);
             res.status(400).send({
               success: false,
               msg: "Error retrieving products"
             })
           } else {
-            res.status(200).send({success: true, data: rows});
+            res.status(200).send({ success: true, data: rows });
           }
         })
       }
@@ -137,8 +178,8 @@ module.exports = function routes(app, logger) {
 
   // Products POST create new product
   app.post("/product", (req, res) => {
-    pool.getConnection(function(err, connection) {
-      if(err) {
+    pool.getConnection(function (err, connection) {
+      if (err) {
         // if there is an issue obtaining a connection, release the connection instance and log the error
         logger.error("Problem obtaining MySQL connection", err);
         res.status(400).send("Problem obtaining MySQL connection");
@@ -148,11 +189,11 @@ module.exports = function routes(app, logger) {
         const sql = "INSERT INTO products (name) VALUES(?)";
 
         connection.query(sql, [name], (err, result) => {
-          if(err) {
+          if (err) {
             logger.error("Error adding product: \n", err);
-            res.status(400).send({success: false, msg: "Error adding product"})
+            res.status(400).send({ success: false, msg: "Error adding product" })
           } else {
-            res.status(200).send({success: true, msg: "Product successfully added"})
+            res.status(200).send({ success: true, msg: "Product successfully added" })
           }
         })
       }
