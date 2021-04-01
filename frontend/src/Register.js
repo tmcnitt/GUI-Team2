@@ -2,38 +2,43 @@ import React, { useEffect, useState } from 'react';
 
 
 export function Register(props) {
+
+    const [values, setValues] = useState({ username: "", password: "", user_type: "" });
+
+    const handleInputChange = e => {
+        const { name, value } = e.target
+        setValues({ ...values, [name]: value })
+    }
+
     return (
-        <div>
-            <div className="container h-100">
-                <div style={{ "height": "100vh" }} className="row justify-content-center align-items-center">
-                    <form className="col-4">
-                        <div className="col-12 mb-3 text-center">
-                            <h1>Register</h1>
-                        </div>
-                        <div className="form-group mb-3">
-                            <label htmlFor="username">Username</label>
-                            <input type="text" className="form-control" id="username" placeholder="Enter username" />
-                        </div>
-                        <div className="form-group mb-3">
-                            <label htmlFor="password">Password</label>
-                            <input type="password" className="form-control" id="password" placeholder="Password" />
-                            <small id="passwordHelp" className="form-text text-muted">Don't share your password with anybody.</small>
-                        </div>
-                        <div class="form-check mb-3">
-                            <input class="form-check-input" type="checkbox" value="" id="defaultCheck1" />
-                            <label class="form-check-label" for="defaultCheck1">
-                                I am a contractor
-                            </label>
-                        </div>
-                        <div className="col-12 text-center">
-                            <button type="submit" className="btn btn-primary mx-auto">Submit</button>
-                        </div>
-                        <div className="col-12 mt-3 text-center">
-                            <p>Back to login? <a className="text-primary" onClick={() => props.setRegister(false)}>Register</a></p>
-                        </div>
-                    </form>
-                </div>
+        <>
+            <div className="col-12 mb-3 text-center">
+                <h1>Register</h1>
             </div>
-        </div>
+            {props.banner}
+            <div className="form-group mb-3">
+                <label htmlFor="username">Username</label>
+                <input name="username" value={values.username} onChange={handleInputChange} type="text" className="form-control" id="username" placeholder="Enter username" />
+            </div>
+            <div className="form-group mb-3">
+                <label htmlFor="password">Password</label>
+                <input name="password" value={values.password} onChange={handleInputChange} type="password" className="form-control" id="password" placeholder="Password" />
+                <small id="passwordHelp" className="form-text text-muted">Don't share your password with anybody.</small>
+            </div>
+            <div className="form-group mb-3">
+                <label htmlFor="user_type">I am a...</label>
+                <select className="form-select" name="user_type" value={values.user_type} onChange={handleInputChange}>
+                    <option value="DIY User">DIY User</option>
+                    <option value="Site Manager">Site Manager</option>
+                    <option value="Construction Firm">Construction Firm</option>
+                </select>
+            </div>
+            <div className="col-12 text-center">
+                <button type="button" onClick={() => props.doRegister(values.username, values.password, values.user_type)} className="btn btn-primary mx-auto">Submit</button>
+            </div>
+            <div className="col-12 mt-3 text-center">
+                <p>Back to login? <a className="text-primary" onClick={() => props.toggleRegisterMode()}>Register</a></p>
+            </div>
+        </>
     )
 }
