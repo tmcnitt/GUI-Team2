@@ -1,43 +1,6 @@
 const pool = require("./db");
 const bcrypt = require("bcryptjs");
-const jwt = require('jsonwebtoken');
-const JWT_KEY = "+EjS86shd[yAA>CA+/L*W.9'4b_r2"
-
-const checkJWT =  (token) => {
-  let decoded = jwt.verify(token, JWT_KEY);
-  if (!decoded) {
-    return { success: false }
-  }
-
-  return new Promise((resolve, reject) => {
-    pool.getConnection((err, connection) => {
-      if (err) {
-        return { success: false }
-      }
-  
-      connection.query("SELECT * FROM users WHERE id = ?", [decoded], (err, result) => {
-        if (err) {
-          reject()
-        } else {
-          resolve(result[0])
-        }
-      })
-    })
-  })
-}
-
-const verifyToken = (req) => {
-  const bearerHeader = req.headers['authorization'];
-
-  if (bearerHeader) {
-    const bearer = bearerHeader.split(' ');
-    const bearerToken = bearer[1];
-
-    return checkJWT(bearerToken)
-  } else {
-    return { success: false }
-  }
-}
+const jwt  = require('./jwt')
 
 module.exports = function routes(app, logger) {
   // GET /
@@ -89,7 +52,7 @@ module.exports = function routes(app, logger) {
                   error(err);
                   return;
                 }
-                const JWT = jwt.sign(results.insertId, JWT_KEY)
+                const JWT = jwt.makeJWT(result.insertId)
                 res.status(200).send({
                   success: true,
                   data: { jwt: JWT }
@@ -126,7 +89,7 @@ module.exports = function routes(app, logger) {
             bcrypt.compare(password, hash, (err, result) => {
               if (result && !err) {
                 let { username, user_type } = rows[0];
-                const JWT = jwt.sign(rows[0].id, JWT_KEY)
+                const JWT = jwt.makeJWT(rows[0].id)
                 res.status(200).send({ success: true, msg: { username, user_type }, data: { jwt: JWT } });
               } else {
                 logger.error("Error no matching password: \n", err);
@@ -143,7 +106,7 @@ module.exports = function routes(app, logger) {
   });
 
   app.get("/users/check", (req, res) => {
-    verifyToken(req).then((user) => {
+    jwt.verifyToken(req).then((user) => {
       user = { username: user.username, user_type: user.user_type }
       res.status(200).send(user)
     }).catch(() => {
