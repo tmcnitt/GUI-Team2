@@ -1,5 +1,6 @@
 const pool = require("./db");
 const bcrypt = require("bcryptjs");
+const jwt = require("./jwt");
 
 module.exports = function routes(app, logger) {
   // GET /
@@ -42,17 +43,18 @@ module.exports = function routes(app, logger) {
             }
             const sql =
               "INSERT INTO db.users (username, pass, user_type) VALUES(?, ?, ?)";
-            connection.query(
-              sql,
-              [username, hash, type],
-              (err) => {
-                connection.release();
-                if (err) {
-                  error(err);
-                }
-                res.status(200).send();
+            connection.query(sql, [username, hash, type], (err, result) => {
+              connection.release();
+              if (err) {
+                error(err);
+                return;
               }
-            );
+              const JWT = jwt.makeJWT(result.insertId);
+              res.status(200).send({
+                success: true,
+                data: { jwt: JWT },
+              });
+            });
           });
         });
       }
@@ -82,19 +84,11 @@ module.exports = function routes(app, logger) {
 
             bcrypt.compare(password, hash, (err, result) => {
               if (result && !err) {
-                sql =
-                  "SELECT username, user_type FROM db.users WHERE username = ?";
-                connection.query(sql, [username], (err, rows) => {
-                  if (err) {
-                    logger.error("Error retrieving information: \n", err);
-                    res
-                      .status(400)
-                      .send(
-                        "Error retrieving login information from database."
-                      );
-                  } else {
-                    res.status(200).send({ success: true, msg: rows[0] });
-                  }
+                let { username, user_type } = rows[0];
+                const JWT = jwt.makeJWT(rows[0].id);
+                res.status(200).send({
+                  success: true,
+                  data: { jwt: JWT, username, user_type },
                 });
               } else {
                 logger.error("Error no matching password: \n", err);
@@ -110,35 +104,47 @@ module.exports = function routes(app, logger) {
     });
   });
 
+  app.get("/users/check", (req, res) => {
+    jwt
+      .verifyToken(req)
+      .then((user) => {
+        user = { username: user.username, user_type: user.user_type };
+        res.status(200).send(user);
+      })
+      .catch(() => {
+        res.status(400);
+      });
+  });
+
   // Products GET returns all prodcuts
   app.get("/products", (req, res) => {
-    pool.getConnection(function(err, connection) {
+    pool.getConnection(function (err, connection) {
       if (err) {
         // if there is an issue obtaining a connection, release the connection instance and log the error
         logger.error("Problem obtaining MySQL connection", err);
         res.status(400).send("Problem obtaining MySQL connection");
       } else {
         // if there is no issue obtaining a connection, execute query and release connection
-        const sql = "SELECT * FROM products"
+        const sql = "SELECT * FROM products";
         connection.query(sql, (err, rows) => {
-          if(err) {
+          if (err) {
             logger.error("Error retrieving products: \n", err);
             res.status(400).send({
               success: false,
-              msg: "Error retrieving products"
-            })
+              msg: "Error retrieving products",
+            });
           } else {
-            res.status(200).send({success: true, data: rows});
+            res.status(200).send({ success: true, data: rows });
           }
-        })
+        });
       }
-    })
-  })
+    });
+  });
 
   // Products POST create new product
   app.post("/product", (req, res) => {
-    pool.getConnection(function(err, connection) {
-      if(err) {
+    pool.getConnection(function (err, connection) {
+      if (err) {
         // if there is an issue obtaining a connection, release the connection instance and log the error
         logger.error("Problem obtaining MySQL connection", err);
         res.status(400).send("Problem obtaining MySQL connection");
@@ -148,14 +154,18 @@ module.exports = function routes(app, logger) {
         const sql = "INSERT INTO products (name) VALUES(?)";
 
         connection.query(sql, [name], (err, result) => {
-          if(err) {
+          if (err) {
             logger.error("Error adding product: \n", err);
-            res.status(400).send({success: false, msg: "Error adding product"})
+            res
+              .status(400)
+              .send({ success: false, msg: "Error adding product" });
           } else {
-            res.status(200).send({success: true, msg: "Product successfully added"})
+            res
+              .status(200)
+              .send({ success: true, msg: "Product successfully added" });
           }
-        })
+        });
       }
-    })
-  })
+    });
+  });
 };
