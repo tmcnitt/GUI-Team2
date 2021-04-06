@@ -1,6 +1,7 @@
 const pool = require("./db");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { query } = require("express");
 const JWT_KEY = "+EjS86shd[yAA>CA+/L*W.9'4b_r2";
 
 module.exports.makeJWT = (id) => {
@@ -23,6 +24,7 @@ const checkJWT = (token) => {
         "SELECT * FROM users WHERE id = ?",
         [decoded],
         (err, result) => {
+          query.release();
           if (err) {
             reject();
           } else {

@@ -113,7 +113,7 @@ module.exports = function routes(app, logger) {
         res.status(200).send(user);
       })
       .catch(() => {
-        res.status(400);
+        res.status(400).end();
       });
   });
 
