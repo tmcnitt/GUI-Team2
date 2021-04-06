@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useState } from "react";
 import "./App.css";
 import { Login } from "./Login.js";
 import { Register } from "./Register.js";
@@ -11,7 +11,7 @@ export function Users() {
   const [registerMode, setRegister] = useState(false);
   const [bannerMessage, setBanner] = useState("");
 
-  const { baseURL } = useContext(AppContext);
+  const { baseURL, setUser, setJWT } = useContext(AppContext);
 
   const toggleRegisterMode = () => {
     setBanner("");
@@ -25,7 +25,10 @@ export function Users() {
     axios
       .post(baseURL + "/login", { username, password })
       .then((res) => {
-        //TODO: Handle success, generate JWT on backend
+        //Handle success and update state
+        setJWT(res.data.data.jwt)
+        localStorage.setItem("jwt", res.data.data.jwt)
+        setUser(res.data.data)
       })
       .catch((e) => {
         setBanner(e.response.data.msg);
@@ -39,8 +42,9 @@ export function Users() {
     axios
       .post(baseURL + "/users", { username, password, user_type })
       .then((res) => {
-        //TODO: Handle success, generate JWT on backend
-        setBanner("Success!");
+        setJWT(res.data.data.jwt)
+        localStorage.setItem("jwt", res.data.data.jwt)
+        setUser(res.data.data)
       })
       .catch((e) => {
         setBanner(e.response.data.msg);
@@ -48,7 +52,7 @@ export function Users() {
   };
 
   let banner = <></>;
-  if (bannerMessage != "") {
+  if (bannerMessage !== "") {
     banner = (
       <div className="alert alert-primary" role="alert">
         {bannerMessage}
