@@ -178,7 +178,31 @@ module.exports = function routes(app, logger) {
           res.status(400).send("Problem obtaining MySQL connection");
         } else {
           // if there is no issue obtaining a connection, execute query and release connection
-          const sql = "INSERT INTO fixed_price VALUES()"
+          jwt.verifyToken(req).then((user) => {
+            const id = req.body.id;
+            const product_id = req.body.product_id;
+            const list_user_id = user.id;
+            const is_finished = req.body.is_finished;
+            const is_discounted = req.body.is_discounted;
+            const description = req.body.description;
+            const base_price = req.body.base_price;
+            const sql = "INSERT INTO fixed_price (id, product_id, list_user_id, is_finished, is_discounted, description, base_price) VALUES(?, ?, ?, ?, ?, ?, ?)";
+
+            connection.query(sql, [id, product_id, list_user_id, is_finished, is_discounted, description, base_price], (err, results) => {
+              if(err) {
+                logger.error("Error adding fixed price auction: \n", err);
+              res
+                .status(400)
+                .send({ success: false, msg: "Error adding fixed price auction" });
+              } else {
+                res
+                .status(200)
+                .send({ success: true, msg: "Fixed price auction successfully created" });
+              }
+            })
+          }).catch(() => {
+            res.status(400);
+          })
         }
       })
   })
