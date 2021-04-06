@@ -7,7 +7,6 @@ import { Route, Redirect } from "react-router-dom";
 //https://reactrouter.com/web/example/auth-workflow
 export function PrivateRoute({ children, ...rest }) {
     let auth = useContext(AppContext);
-    console.log(auth.user)
     return (
         <Route
             {...rest}

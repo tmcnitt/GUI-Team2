@@ -4,6 +4,11 @@ import { Login } from "./Login.js";
 import { Register } from "./Register.js";
 import { AppContext } from "./AppContext.js";
 
+import {
+  useHistory,
+  useLocation
+} from 'react-router-dom'
+
 import axios from "axios";
 
 // React functional component
@@ -18,6 +23,13 @@ export function Users() {
     setRegister(!registerMode);
   };
 
+  let history = useHistory();
+  let location = useLocation();
+  const redirectToHome = () => {
+    let { from } = location.state || { from: { pathname: "/" } };
+    history.replace(from);
+  }
+
   const doLogin = async (username, password) => {
     //Clear banner so they know its different
     setBanner("");
@@ -29,6 +41,7 @@ export function Users() {
         setJWT(res.data.data.jwt)
         localStorage.setItem("jwt", res.data.data.jwt)
         setUser(res.data.data)
+        redirectToHome()
       })
       .catch((e) => {
         setBanner(e.response.data.msg);
@@ -45,6 +58,7 @@ export function Users() {
         setJWT(res.data.data.jwt)
         localStorage.setItem("jwt", res.data.data.jwt)
         setUser(res.data.data)
+        redirectToHome()
       })
       .catch((e) => {
         setBanner(e.response.data.msg);

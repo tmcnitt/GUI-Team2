@@ -22,7 +22,7 @@ export function App() {
   }, [])
 
   if (!context.setup) {
-    return <div><p>App Loading</p></div>
+    return <div></div>
   }
 
   return (

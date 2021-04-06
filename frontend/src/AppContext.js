@@ -39,9 +39,10 @@ export function setupLogin(context) {
         axios
             .get(context.baseURL + "/users/check", { headers: axiosJWTHeader(stored) })
             .then((res) => {
-                console.log('got user')
                 //Set the user to the object we just got
                 context.setUser(res.data)
+                context.setSetup(true);
+            }).catch(() => {
                 context.setSetup(true);
             })
     } else {
