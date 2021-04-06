@@ -168,4 +168,48 @@ module.exports = function routes(app, logger) {
       }
     });
   });
+
+  // POST /fixed (create a fixed auction)
+  app.post('/fixed', (req, res) => {
+      pool.getConnection(function (err, connection) {
+        if(err) {
+          // if there is an issue obtaining a connection, release the connection instance and log the error
+          logger.error("Problem obtaining MySQL connection", err);
+          res.status(400).send("Problem obtaining MySQL connection");
+        } else {
+          // if there is no issue obtaining a connection, execute query and release connection
+          const sql = "INSERT INTO fixed_price VALUES()"
+        }
+      })
+  })
+
+  // GET /fixed (get all current fixed options)
+  app.get('/fixed', (req, res) => {
+    if(err) {
+      // if there is an issue obtaining a connection, release the connection instance and log the error
+      logger.error("Problem obtaining MySQL connection", err);
+      res.status(400).send("Problem obtaining MySQL connection");
+    } else {
+      // if there is no issue obtaining a connection, execute query and release connection
+      const sql = "SELECT * FROM fixed_price";
+      connection.query(sql, (err, rows) => {
+        if(err) {
+          logger.error("Error getting fixed price listings: \n", err);
+          res
+            .status(400)
+            .send({ success: false, msg: "Error getting fixed price listings" });
+        } else {
+          res
+            .status(200)
+            .send({ succes: true, data: rows })
+        }
+      })
+    }
+  })
+
+  // PUT /fixed/{id} (update an auction with discount price, description, base price, discount end)
+
+  // DELETE /fixed/{id} (delete selected auction)
+
+  // POST /fixed/{id} (user buying auction set is_finished to true)
 };
