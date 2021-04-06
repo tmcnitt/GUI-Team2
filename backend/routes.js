@@ -73,6 +73,7 @@ module.exports = function routes(app, logger) {
         const username = req.body.username;
         var sql = "SELECT * FROM db.users WHERE username = ?";
         connection.query(sql, [username], (err, rows) => {
+          connection.release();
           if (err || !rows.length) {
             logger.error("Error while username salt: \n", err);
             res
@@ -127,6 +128,7 @@ module.exports = function routes(app, logger) {
         // if there is no issue obtaining a connection, execute query and release connection
         const sql = "SELECT * FROM products";
         connection.query(sql, (err, rows) => {
+          connection.release();
           if (err) {
             logger.error("Error retrieving products: \n", err);
             res.status(400).send({
@@ -154,6 +156,7 @@ module.exports = function routes(app, logger) {
         const sql = "INSERT INTO products (name) VALUES(?)";
 
         connection.query(sql, [name], (err, result) => {
+          connection.release();
           if (err) {
             logger.error("Error adding product: \n", err);
             res
