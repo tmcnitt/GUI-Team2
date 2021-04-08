@@ -57,6 +57,7 @@ module.exports = function routes(app, logger) {
             });
           });
         });
+        connection.release();
       }
     });
   });
@@ -100,6 +101,7 @@ module.exports = function routes(app, logger) {
             });
           }
         });
+        connection.release();
       }
     });
   });
@@ -137,6 +139,7 @@ module.exports = function routes(app, logger) {
             res.status(200).send({ success: true, data: rows });
           }
         });
+        connection.release();
       }
     });
   });
@@ -167,6 +170,7 @@ module.exports = function routes(app, logger) {
         });
       }
     });
+    connection.release();
   });
 
   // POST /fixed (create a fixed auction)
@@ -203,6 +207,7 @@ module.exports = function routes(app, logger) {
           }).catch(() => {
             res.status(400);
           })
+          connection.release();
         }
       })
   })
@@ -229,6 +234,7 @@ module.exports = function routes(app, logger) {
               .send({ succes: true, data: rows })
           }
         })
+        connection.release();
       }
     })
   })
@@ -273,15 +279,68 @@ module.exports = function routes(app, logger) {
               })
             }
           })
-
         }).catch(() => {
-          res.status(400).send("token broke");
+          res.status(400);
         })
+        connection.release();
       }
     })
   })
 
   // DELETE /fixed/{id} (delete selected auction)
+  app.delete('/fixed/', (req, res) => {
+    pool.getConnection(function (err, connection) {
+      if(err) {
+        // if there is an issue obtaining a connection, release the connection instance and log the error
+        logger.error("Problem obtaining MySQL connection", err);
+        res.status(400).send("Problem obtaining MySQL connection");
+      } else {
+        jwt.verifyToken(req).then((user) => {
+          const user_id = user.id;
+          const sql = "DELETE FROM fixed_price WHERE id = ? AND list_user_id = ?";
 
-  // POST /fixed/{id} (user buying auction set is_finished to true)
+          connection.query(sql, [req.param('id'), user_id], (err, result) => {
+            if(err) {
+              logger.error("Error deleting fixed price auction: \n", err);
+              res
+                .status(400)
+                .send({ success: false, msg: "Error deleting auction" });
+            } else {
+              res
+                .status(200)
+                .send({ succes: true, msg: "Auction deleted successfully" })
+            }
+          })
+        }).catch(() => {
+            res.status(400);
+        })
+        connection.release();
+      }
+    })
+  })
+
+  // PUT /endfixed/{id} (user buying auction set is_finished to true)
+  app.put('/endfixed/', (req, res) => {
+    pool.getConnection(function (err, connection) {
+      if(err) {
+        // if there is an issue obtaining a connection, release the connection instance and log the error
+        logger.error("Problem obtaining MySQL connection", err);
+        res.status(400).send("Problem obtaining MySQL connection");
+      } else {
+        connection.query("UPDATE fixed_price SET is_finished = 1 WHERE id = ?", [req.param('id')], (err, result) => {
+          if(err) {
+            logger.error("Error closing auction: \n", err);
+            res
+              .status(400)
+              .send({ success: false, msg: "Error closing auction" });
+          } else {
+            res
+              .status(200)
+              .send({ succes: true, msg: "Auction successfully closed" });
+          }
+        })
+        connection.release();
+      }
+    })
+  })
 };
