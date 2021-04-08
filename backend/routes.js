@@ -220,7 +220,7 @@ module.exports = function routes(app, logger) {
         res.status(400).send("Problem obtaining MySQL connection");
       } else {
         // if there is no issue obtaining a connection, execute query and release connection
-        const sql = "SELECT * FROM fixed_price";
+        const sql = "SELECT * FROM fixed_price WHERE is_finished = 0";
         connection.query(sql, (err, rows) => {
           connection.release();
           if(err) {
@@ -281,7 +281,7 @@ module.exports = function routes(app, logger) {
             }
           })
         }).catch(() => {
-          res.status(400);
+          res.status(400).end();
         })
       }
     })
@@ -313,7 +313,7 @@ module.exports = function routes(app, logger) {
             }
           })
         }).catch(() => {
-            res.status(400);
+            res.status(400).end();
         })
       }
     })
