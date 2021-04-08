@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import "./App.css";
 import { Users } from "./Users.js";
 import { AppContext } from "./AppContext.js";
+import { AuctionList } from "./AuctionList";
 import axios from "axios";
 
 // React functional component
@@ -22,7 +23,7 @@ export function App() {
     <AppContext.Provider value={context}>
       <div className="App">
         <header className="App-header"></header>
-        <Users />
+        <AuctionList />
       </div>
     </AppContext.Provider>
   );
