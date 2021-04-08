@@ -234,6 +234,52 @@ module.exports = function routes(app, logger) {
   })
 
   // PUT /fixed/{id} (update an auction with discount price, description, base price, discount end)
+  app.put('/fixed/', (req, res) => {
+    pool.getConnection(function (err, connection) {
+      if(err) {
+        // if there is an issue obtaining a connection, release the connection instance and log the error
+        logger.error("Problem obtaining MySQL connection", err);
+        res.status(400).send("Problem obtaining MySQL connection");
+      } else {
+        jwt.verifyToken(req).then((user) => {
+          const user_id = user.id;
+          const id = req.param('id');
+          const auction = "SELECT description, discount_price, base_price, discount_end FROM fixed_price WHERE list_user_id = ? AND id = ?";
+
+          connection.query(auction, [user_id, id], (err, results) => {
+            if(err) {
+              logger.error("Error retrieving auction information: \n", err);
+              res
+                .status(400)
+                .send({ success: false, msg: "Error retrieving auction information" });
+            } else {
+              const description = req.body.description || results[0].description;
+              const discount_price = req.body.discount_price || results[0].discount_price;
+              const base_price = req.body.base_price || results[0].base_price;
+              const discount_end = req.body.discount_end || results[0].discount_end;
+              const sql = "UPDATE fixed_price SET description = ?, discount_price = ?, base_price = ?, discount_end = ? WHERE list_user_id = ? AND id = ?";
+
+              connection.query(sql, [description, discount_price, base_price, discount_end, user_id, id], (error, result) => {
+                if(error) {
+                  logger.error("Error updating auction information: \n", err);
+                  res
+                    .status(400)
+                    .send({ success: false, msg: "Error updating auction information" });
+                } else {
+                  res
+                    .status(200)
+                    .send({ succes: true, msg: "Fixed price auction updated" })
+                }
+              })
+            }
+          })
+
+        }).catch(() => {
+          res.status(400).send("token broke");
+        })
+      }
+    })
+  })
 
   // DELETE /fixed/{id} (delete selected auction)
 
