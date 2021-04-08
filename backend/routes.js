@@ -229,9 +229,12 @@ module.exports = function routes(app, logger) {
               .status(400)
               .send({ success: false, msg: "Error getting fixed price listings" });
           } else {
+            rows.forEach((row) => {
+              row.current_price = getListingPrice(row.base_price, row.discount_price, row.discount_end)
+            })
             res
               .status(200)
-              .send({ succes: true, data: rows })
+              .send({ success: true, data: rows })
           }
         })
       }
@@ -252,7 +255,6 @@ module.exports = function routes(app, logger) {
           const auction = "SELECT description, discount_price, base_price, discount_end FROM fixed_price WHERE list_user_id = ? AND id = ?";
 
           connection.query(auction, [user_id, id], (err, results) => {
-            connection.release();
             if(err) {
               logger.error("Error retrieving auction information: \n", err);
               res
@@ -344,3 +346,14 @@ module.exports = function routes(app, logger) {
     })
   })
 };
+
+function getListingPrice(base_price, discount_price, discount_end) {
+  var curr = new Date();
+  var discount = new Date(discount_end);
+
+  if(curr < discount) {
+    return discount_price;
+  } else if(curr > discount) {
+    return base_price;
+  }
+}
