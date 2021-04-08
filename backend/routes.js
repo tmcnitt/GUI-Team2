@@ -57,7 +57,6 @@ module.exports = function routes(app, logger) {
             });
           });
         });
-        connection.release();
       }
     });
   });
@@ -74,6 +73,7 @@ module.exports = function routes(app, logger) {
         const username = req.body.username;
         var sql = "SELECT * FROM db.users WHERE username = ?";
         connection.query(sql, [username], (err, rows) => {
+          connection.release();
           if (err || !rows.length) {
             logger.error("Error while username salt: \n", err);
             res
@@ -101,7 +101,6 @@ module.exports = function routes(app, logger) {
             });
           }
         });
-        connection.release();
       }
     });
   });
@@ -129,6 +128,7 @@ module.exports = function routes(app, logger) {
         // if there is no issue obtaining a connection, execute query and release connection
         const sql = "SELECT * FROM products";
         connection.query(sql, (err, rows) => {
+          connection.release();
           if (err) {
             logger.error("Error retrieving products: \n", err);
             res.status(400).send({
@@ -139,7 +139,6 @@ module.exports = function routes(app, logger) {
             res.status(200).send({ success: true, data: rows });
           }
         });
-        connection.release();
       }
     });
   });
@@ -157,6 +156,7 @@ module.exports = function routes(app, logger) {
         const sql = "INSERT INTO products (name) VALUES(?)";
 
         connection.query(sql, [name], (err, result) => {
+          connection.release();
           if (err) {
             logger.error("Error adding product: \n", err);
             res
@@ -170,7 +170,6 @@ module.exports = function routes(app, logger) {
         });
       }
     });
-    connection.release();
   });
 
   // POST /fixed (create a fixed auction)
@@ -193,6 +192,7 @@ module.exports = function routes(app, logger) {
             const sql = "INSERT INTO fixed_price (id, product_id, list_user_id, is_finished, is_discounted, description, base_price) VALUES(?, ?, ?, ?, ?, ?, ?)";
 
             connection.query(sql, [id, product_id, list_user_id, is_finished, is_discounted, description, base_price], (err, results) => {
+              connection.release();
               if(err) {
                 logger.error("Error adding fixed price auction: \n", err);
               res
@@ -207,7 +207,6 @@ module.exports = function routes(app, logger) {
           }).catch(() => {
             res.status(400);
           })
-          connection.release();
         }
       })
   })
@@ -223,6 +222,7 @@ module.exports = function routes(app, logger) {
         // if there is no issue obtaining a connection, execute query and release connection
         const sql = "SELECT * FROM fixed_price";
         connection.query(sql, (err, rows) => {
+          connection.release();
           if(err) {
             logger.error("Error getting fixed price listings: \n", err);
             res
@@ -234,7 +234,6 @@ module.exports = function routes(app, logger) {
               .send({ succes: true, data: rows })
           }
         })
-        connection.release();
       }
     })
   })
@@ -253,6 +252,7 @@ module.exports = function routes(app, logger) {
           const auction = "SELECT description, discount_price, base_price, discount_end FROM fixed_price WHERE list_user_id = ? AND id = ?";
 
           connection.query(auction, [user_id, id], (err, results) => {
+            connection.release();
             if(err) {
               logger.error("Error retrieving auction information: \n", err);
               res
@@ -266,6 +266,7 @@ module.exports = function routes(app, logger) {
               const sql = "UPDATE fixed_price SET description = ?, discount_price = ?, base_price = ?, discount_end = ? WHERE list_user_id = ? AND id = ?";
 
               connection.query(sql, [description, discount_price, base_price, discount_end, user_id, id], (error, result) => {
+                connection.release();
                 if(error) {
                   logger.error("Error updating auction information: \n", err);
                   res
@@ -282,7 +283,6 @@ module.exports = function routes(app, logger) {
         }).catch(() => {
           res.status(400);
         })
-        connection.release();
       }
     })
   })
@@ -300,6 +300,7 @@ module.exports = function routes(app, logger) {
           const sql = "DELETE FROM fixed_price WHERE id = ? AND list_user_id = ?";
 
           connection.query(sql, [req.param('id'), user_id], (err, result) => {
+            connection.release();
             if(err) {
               logger.error("Error deleting fixed price auction: \n", err);
               res
@@ -314,7 +315,6 @@ module.exports = function routes(app, logger) {
         }).catch(() => {
             res.status(400);
         })
-        connection.release();
       }
     })
   })
@@ -328,6 +328,7 @@ module.exports = function routes(app, logger) {
         res.status(400).send("Problem obtaining MySQL connection");
       } else {
         connection.query("UPDATE fixed_price SET is_finished = 1 WHERE id = ?", [req.param('id')], (err, result) => {
+          connection.release();
           if(err) {
             logger.error("Error closing auction: \n", err);
             res
@@ -339,7 +340,6 @@ module.exports = function routes(app, logger) {
               .send({ succes: true, msg: "Auction successfully closed" });
           }
         })
-        connection.release();
       }
     })
   })
