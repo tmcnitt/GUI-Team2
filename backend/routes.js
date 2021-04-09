@@ -324,31 +324,6 @@ module.exports = function routes(app, logger) {
     })
   })
 
-  // PUT /endfixed/{id} (user buying auction set is_finished to true)
-  app.put('/endfixed/', (req, res) => {
-    pool.getConnection(function (err, connection) {
-      if(err) {
-        // if there is an issue obtaining a connection, release the connection instance and log the error
-        logger.error("Problem obtaining MySQL connection", err);
-        res.status(400).send("Problem obtaining MySQL connection");
-      } else {
-        connection.query("UPDATE fixed_price SET is_finished = 1 WHERE id = ?", [req.param('id')], (err, result) => {
-          connection.release();
-          if(err) {
-            logger.error("Error closing auction: \n", err);
-            res
-              .status(400)
-              .send({ success: false, msg: "Error closing auction" });
-          } else {
-            res
-              .status(200)
-              .send({ succes: true, msg: "Auction successfully closed" });
-          }
-        })
-      }
-    })
-  })
-
   // POST /buy/{id} (user buys auction, update quantity or end listing and create transaction)
   app.post('/buy/', (req, res) => {
       pool.getConnection(function(err, connection) {
