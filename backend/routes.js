@@ -1,6 +1,5 @@
 const pool = require("./db");
 const bcrypt = require("bcryptjs");
-const { config } = require("./db");
 
 module.exports = function routes(app, logger) {
   // GET /
@@ -127,10 +126,10 @@ app.post('/auction', async (req,res)=>{
       const bid_user_id = req.body.bid_user_id;
       const product_id = req.body.product_id;
       const show_user_bid = req.body.show_user_bid;
-      const is_finished = req.body.is_finished;
+      const is_finished = false;
       const start_date = req.body.start_date;
       const end_date = req.body.end_date;
-      const description = req.body.Description;
+      const description = req.body.description;
 
       const sql = "INSERT INTO auction (id,current_bid,list_user_id,bid_user_id,product_id,show_user_bid,is_finished,start_date,end_date,description) VALUES (?,?,?,?,?,?,?,?,?,?)";
       connection.query(sql,[id,current_bid,list_user_id,bid_user_id,product_id,show_user_bid,is_finished,start_date,end_date,description],(err, result) =>{
@@ -212,42 +211,41 @@ app.put('/auction/:id', async(req,res) =>{
       res.status(400).send("Problem obtaining MySQL connection");
     }
     else{
-      const id = req.body.id;
-      const end_date = req.body.end_date;
-      const Description = req.body.Description;
+      jwt.verifyToken(req).then((user) => {
+      const user_id = user.id;
+      const id = req.param('id');
 
-      const sql1 = "UPDATE auction SET auction.end_date = ? WHERE auction.id = ?";
-      connection.query(sql1,[end_date,id], (err, result)=>{
-        connection.release();
-        if (err) {
-          logger.error("Error updating end date: \n", err);
+      const sql = "SELECT description, end_date FROM auction WHERE list_user_id = ? AND id = ?";
+      connection.query(sql, [user_id, id], (err, results) => {
+        if(err) {
+          logger.error("Error retrieving auction information: \n", err);
           res
             .status(400)
-            .send({ success: false, msg: "Error updating end date" });
-        } else {
-          res
-            .status(200)
-            .send({ success: true, msg: "End date successfully Updated" });
-        }
-      });
+            .send({ success: false, msg: "Error retrieving auction information" });
+        }else{
+          const description = req.body.description || results[0].description;
+          const end_date = req.body.end_date || results[0].end_date;
 
-      const sql2 = "UPDATE auction SET auction.Description = ? WHERE auction.id = ?";
-      connection.query(sql2,[Description,id], (err, result)=>{
-        connection.release();
-        if (err) {
-          logger.error("Error updating desc: \n", err);
-          res
-            .status(400)
-            .send({ success: false, msg: "Error updating desc" });
-        } else {
-          res
-            .status(200)
-            .send({ success: true, msg: "Desc successfully Updated" });
+          const sql2 = "UPDATE auction SET description = ?, end_date = ? WHERE list_user_id = ? AND id = ?";
+          connection.query(sql2, [description, end_date, user_id, id], (error, result) => {
+            connection.release();
+            if(error) {
+              logger.error("Error updating auction information: \n", err);
+              res
+                .status(400)
+                .send({ success: false, msg: "Error updating auction information" });
+            } else {
+              res
+                .status(200)
+                .send({ succes: true, msg: "Auction updated" })
+            }
+          })
         }
       });
-    }
+        
+    });
+  }
   });
-
 });
 
 
@@ -263,7 +261,6 @@ app.post('/auction/:id/bid', async (req,res)=>{
       const id = req.body.id;
       const new_bid = req.body.new_bid;
       const bid_user_id = req.body.bid_user_id;
-      var updated = false;
 
       const sql = "UPDATE auction SET auction.current_bid = ? WHERE auction.id = ? IF (? > auction.current_bid)";
       connection.query(sql,[new_bid,id,new_bid], (err, result)=>{
@@ -275,30 +272,23 @@ app.post('/auction/:id/bid', async (req,res)=>{
             .send({ success: false, msg: "Error updating bid" });
         } 
         else {
-          updated = true;
-          res
-            .status(200)
-            .send({ success: true, msg: "Bid successfully Updated" });
+          const sql1 = "UPDATE auction SET auction.bid_user_id = ? WHERE auction.id = ?";
+          connection.query(sql1,[bid_user_id,id], (err, result)=>{
+            connection.release();
+            if (err) {
+              logger.error("Error updating user: \n", err);
+              res
+                .status(400)
+                .send({ success: false, msg: "Error updating user" });
+            } 
+            else {
+              res
+                .status(200)
+                .send({ success: true, msg: "User successfully Updated" });
+            }
+          });
         }
       });
-      if (updated){
-        const sql1 = "UPDATE auction SET auction.bid_user_id = ? WHERE auction.id = ?";
-        connection.query(sql1,[bid_user_id,id], (err, result)=>{
-          connection.release();
-          if (err) {
-            logger.error("Error updating user: \n", err);
-            res
-              .status(400)
-              .send({ success: false, msg: "Error updating user" });
-          } 
-          else {
-            updated = true;
-            res
-              .status(200)
-              .send({ success: true, msg: "User successfully Updated" });
-          }
-        });
-      }
     }
   });
 });
