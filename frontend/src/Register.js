@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 
 export function Register(props) {
   const [values, setValues] = useState({

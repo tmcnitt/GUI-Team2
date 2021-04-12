@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 
 export function Login(props) {
   const [values, setValues] = useState({ username: "", password: "" });

@@ -23,6 +23,7 @@ const checkJWT = (token) => {
         "SELECT * FROM users WHERE id = ?",
         [decoded],
         (err, result) => {
+          connection.release();
           if (err) {
             reject();
           } else {
