@@ -385,7 +385,7 @@ module.exports = function routes(app, logger) {
 function createTransaction(req, res, transactionID, listing_id, purchase_type, purchase_quantity, auction) {
   pool.getConnection(function (err, connection) {
     jwt.verifyToken(req).then((user) => {
-      const price = getListingPriceAllQuantity(auction[0].base_price, auction[0].discount_price, auction[0].discount_end, purchase_quantity)
+      const price = getListingPrice(auction[0].base_price, auction[0].discount_price, auction[0].discount_end, purchase_quantity)
       const createTransaction = "INSERT INTO transactions VALUES(?, ?, ?, ?, ?, ?, ?)";
       connection.query(createTransaction, [transactionID, listing_id, auction[0].list_user_id, user.id,
                       purchase_type, purchase_quantity, price], (err, results) => {
