@@ -231,8 +231,8 @@ module.exports = function routes(app, logger) {
               .send({ success: false, msg: "Error getting fixed price listings" });
           } else {
             rows.forEach((row) => {
-              row.price_for_quantity = getListingPriceAllQuantity(row.base_price, row.discount_price, row.discount_end, row.quantity);
-              row.single_price = getListingSinglePrice(row.base_price, row.discount_price, row.discount_end);
+              row.price_for_quantity = getListingPrice(row.base_price, row.discount_price, row.discount_end, row.quantity);
+              row.single_price = getListingPrice(row.base_price, row.discount_price, row.discount_end, 1);
             })
             res
               .status(200)
@@ -405,7 +405,7 @@ function createTransaction(req, res, transactionID, listing_id, purchase_type, p
   })
 }
 
-function getListingPriceAllQuantity(base_price, discount_price, discount_end, quantity) {
+function getListingPrice(base_price, discount_price, discount_end, quantity) {
   var curr = new Date();
   var discount = new Date(discount_end);
 
@@ -413,16 +413,5 @@ function getListingPriceAllQuantity(base_price, discount_price, discount_end, qu
     return discount_price * quantity;
   } else if(curr > discount) {
     return base_price * quantity;
-  }
-}
-
-function getListingSinglePrice(base_price, discount_price, discount_end) {
-  var curr = new Date();
-  var discount = new Date(discount_end);
-
-  if(curr < discount) {
-    return discount_price;
-  } else if(curr > discount) {
-    return base_price;
   }
 }
