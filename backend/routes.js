@@ -189,9 +189,10 @@ module.exports = function routes(app, logger) {
             const is_discounted = req.body.is_discounted;
             const description = req.body.description;
             const base_price = req.body.base_price;
-            const sql = "INSERT INTO fixed_price (id, product_id, list_user_id, is_finished, is_discounted, description, base_price) VALUES(?, ?, ?, ?, ?, ?, ?)";
+            const quantity = req.body.quantity;
+            const sql = "INSERT INTO fixed_price (id, product_id, list_user_id, is_finished, is_discounted, description, base_price, quantity) VALUES(?, ?, ?, ?, ?, ?, ?, ?)";
 
-            connection.query(sql, [id, product_id, list_user_id, is_finished, is_discounted, description, base_price], (err, results) => {
+            connection.query(sql, [id, product_id, list_user_id, is_finished, is_discounted, description, base_price, quantity], (err, results) => {
               connection.release();
               if(err) {
                 logger.error("Error adding fixed price auction: \n", err);
@@ -230,7 +231,8 @@ module.exports = function routes(app, logger) {
               .send({ success: false, msg: "Error getting fixed price listings" });
           } else {
             rows.forEach((row) => {
-              row.current_price = getListingPrice(row.base_price, row.discount_price, row.discount_end)
+              row.price_for_quantity = getListingPrice(row.base_price, row.discount_price, row.discount_end, row.quantity);
+              row.single_price = getListingPrice(row.base_price, row.discount_price, row.discount_end, 1);
             })
             res
               .status(200)
@@ -265,6 +267,7 @@ module.exports = function routes(app, logger) {
               const discount_price = req.body.discount_price || results[0].discount_price;
               const base_price = req.body.base_price || results[0].base_price;
               const discount_end = req.body.discount_end || results[0].discount_end;
+              const quantity = req.body.quantity || results[0].quantity;
               const sql = "UPDATE fixed_price SET description = ?, discount_price = ?, base_price = ?, discount_end = ? WHERE list_user_id = ? AND id = ?";
 
               connection.query(sql, [description, discount_price, base_price, discount_end, user_id, id], (error, result) => {
@@ -321,39 +324,105 @@ module.exports = function routes(app, logger) {
     })
   })
 
-  // PUT /endfixed/{id} (user buying auction set is_finished to true)
-  app.put('/endfixed/', (req, res) => {
-    pool.getConnection(function (err, connection) {
+  // POST /buy/{id} (user buys auction, update quantity or end listing and create transaction)
+  app.post('/buy/', (req, res) => {
+      pool.getConnection(function(err, connection) {
       if(err) {
         // if there is an issue obtaining a connection, release the connection instance and log the error
         logger.error("Problem obtaining MySQL connection", err);
         res.status(400).send("Problem obtaining MySQL connection");
       } else {
-        connection.query("UPDATE fixed_price SET is_finished = 1 WHERE id = ?", [req.param('id')], (err, result) => {
-          connection.release();
-          if(err) {
-            logger.error("Error closing auction: \n", err);
-            res
-              .status(400)
-              .send({ success: false, msg: "Error closing auction" });
-          } else {
-            res
-              .status(200)
-              .send({ succes: true, msg: "Auction successfully closed" });
-          }
-        })
+        connection.beginTransaction(function () {
+          const getAuction = "SELECT * FROM fixed_price WHERE id = ?";
+          connection.query(getAuction, [req.param('id')], (err, auction) => {
+            if (err) {
+              connection.rollback(function () {
+                logger.error("Error retrieving auction information: \n", err);
+                res
+                  .status(400)
+                  .send({ success: false, msg: "Error retrieving auction information" });
+              });
+            } else {
+              const purchase_quantity = req.body.purchase_quantity;
+              if (purchase_quantity < auction[0].quantity) {
+                const quantity_remaining = auction[0].quantity - purchase_quantity;
+                const update = "UPDATE fixed_price SET quantity = ? WHERE id = ?";
+                connection.query(update, [quantity_remaining, req.param('id')], (updateErr) => {
+                  connection.commit();
+                  connection.release();
+                  if (err) {
+                    logger.error("Error updating auction information: \n", err);
+                    res
+                      .status(400)
+                      .send({ success: false, msg: "Error updating auction information" });
+                  } else {
+                    const transactionID = req.body.id;
+                    createTransaction(req, res, transactionID, req.param('id'), 1, purchase_quantity, auction);
+                  }
+                });
+              } else if (purchase_quantity == auction[0].quantity) {
+                const update = "UPDATE fixed_price SET quantity = 0, is_finished = 1 WHERE id = ?";
+                connection.query(update, [req.param('id')], (err) => {
+                  connection.commit();
+                  connection.release();
+                  if (err) {
+                    logger.error("Error updating auction information: \n", err);
+                    res
+                      .status(400)
+                      .send({ success: false, msg: "Error updating auction information" });
+                  } else {
+                    const transactionID = req.body.id;
+                    createTransaction(req, res, transactionID, req.param('id'), 1, purchase_quantity, auction);
+                  }
+                });
+              } else {
+                connection.rollback(function () {
+                  res
+                    .status(400)
+                    .send({ success: false, msg: "Selected quantity greater than quantity available for purchase" });
+                });
+              }
+            }
+          });
+        });
       }
     })
   })
 };
 
-function getListingPrice(base_price, discount_price, discount_end) {
+function createTransaction(req, res, transactionID, listing_id, purchase_type, purchase_quantity, auction) {
+  pool.getConnection(function (err, connection) {
+    jwt.verifyToken(req).then((user) => {
+      const price = getListingPrice(auction[0].base_price, auction[0].discount_price, auction[0].discount_end, purchase_quantity)
+      const createTransaction = "INSERT INTO transactions VALUES(?, ?, ?, ?, ?, ?, ?)";
+      connection.query(createTransaction, [transactionID, listing_id, auction[0].list_user_id, user.id,
+                      purchase_type, purchase_quantity, price], (err, results) => {
+        if(err) {
+        connection.rollback();
+        connection.release();
+        logger.error("Error creating transaction: \n", err);
+        res
+          .status(400)
+          .send({ success: false, msg: "Error creating transaction" });
+        } else {
+          connection.commit();
+          connection.release();
+          res
+            .status(200)
+            .send({ success: true, msg: "Transaction created", price: price})
+        }                                                          
+      })
+    })
+  })
+}
+
+function getListingPrice(base_price, discount_price, discount_end, quantity) {
   var curr = new Date();
   var discount = new Date(discount_end);
 
   if(curr < discount) {
-    return discount_price;
+    return discount_price * quantity;
   } else if(curr > discount) {
-    return base_price;
+    return base_price * quantity;
   }
 }
