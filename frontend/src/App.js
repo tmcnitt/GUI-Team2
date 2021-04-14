@@ -1,29 +1,52 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import "./App.css";
 import { Users } from "./Users.js";
+
 import { AppContext } from "./AppContext.js";
 import { AuctionList } from "./AuctionList";
 import axios from "axios";
 
+import { AppContext, useProvideAppContext, setupLogin } from "./AppContext.js";
+import {
+  BrowserRouter as Router,
+  Switch,
+  Route,
+  Link
+} from "react-router-dom";
+import { PrivateRoute } from './PrivateRoute.js'
+
+
 // React functional component
 export function App() {
-  // ENTER YOUR EC2 PUBLIC IP/URL HERE
-  const ec2_url = "";
-  // CHANGE THIS TO TRUE IF HOSTING ON EC2, MAKE SURE TO ADD IP/URL ABOVE
-  const ec2 = false;
-  // USE localhost OR ec2_url ACCORDING TO ENVIRONMENT
-  const url = ec2 ? ec2_url : "http://localhost:8000";
+
 
   //Global app context
-  let context = {
-    baseURL: url,
-    user: {},
-  };
+  let context = useProvideAppContext();
+
+  useEffect(() => {
+    setupLogin(context);
+  }, [])
+
+  if (!context.setup) {
+    return <div></div>
+  }
+
   return (
     <AppContext.Provider value={context}>
       <div className="App">
         <header className="App-header"></header>
-        <AuctionList />
+
+        <Router>
+          <Switch>
+            <Route path="/login">
+              <Users />
+            </Route>
+            <PrivateRoute path="/">
+              <p>User dashboard!</p>
+            </PrivateRoute>
+          </Switch>
+        </Router>
+
       </div>
     </AppContext.Provider>
   );

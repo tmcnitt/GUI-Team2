@@ -1,8 +1,13 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useState } from "react";
 import "./App.css";
 import { Login } from "./Login.js";
 import { Register } from "./Register.js";
 import { AppContext } from "./AppContext.js";
+
+import {
+  useHistory,
+  useLocation
+} from 'react-router-dom'
 
 import axios from "axios";
 
@@ -11,12 +16,19 @@ export function Users() {
   const [registerMode, setRegister] = useState(false);
   const [bannerMessage, setBanner] = useState("");
 
-  const { baseURL } = useContext(AppContext);
+  const { baseURL, setUser, setJWT } = useContext(AppContext);
 
   const toggleRegisterMode = () => {
     setBanner("");
     setRegister(!registerMode);
   };
+
+  let history = useHistory();
+  let location = useLocation();
+  const redirectToHome = () => {
+    let { from } = location.state || { from: { pathname: "/" } };
+    history.replace(from);
+  }
 
   const doLogin = async (username, password) => {
     //Clear banner so they know its different
@@ -25,7 +37,11 @@ export function Users() {
     axios
       .post(baseURL + "/login", { username, password })
       .then((res) => {
-        //TODO: Handle success, generate JWT on backend
+        //Handle success and update state
+        setJWT(res.data.data.jwt)
+        localStorage.setItem("jwt", res.data.data.jwt)
+        setUser(res.data.data)
+        redirectToHome()
       })
       .catch((e) => {
         setBanner(e.response.data.msg);
@@ -39,8 +55,10 @@ export function Users() {
     axios
       .post(baseURL + "/users", { username, password, user_type })
       .then((res) => {
-        //TODO: Handle success, generate JWT on backend
-        setBanner("Success!");
+        setJWT(res.data.data.jwt)
+        localStorage.setItem("jwt", res.data.data.jwt)
+        setUser(res.data.data)
+        redirectToHome()
       })
       .catch((e) => {
         setBanner(e.response.data.msg);
@@ -48,7 +66,7 @@ export function Users() {
   };
 
   let banner = <></>;
-  if (bannerMessage != "") {
+  if (bannerMessage !== "") {
     banner = (
       <div className="alert alert-primary" role="alert">
         {bannerMessage}
