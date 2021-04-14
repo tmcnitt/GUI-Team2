@@ -1,8 +1,8 @@
 import React, { useEffect } from "react";
 import "./App.css";
 import { Users } from "./Users.js";
+import { ItemListingPage } from "./ItemListingPage";
 
-import { AppContext } from "./AppContext.js";
 import { AuctionList } from "./AuctionList";
 import axios from "axios";
 
@@ -36,16 +36,7 @@ export function App() {
       <div className="App">
         <header className="App-header"></header>
 
-        <Router>
-          <Switch>
-            <Route path="/login">
-              <Users />
-            </Route>
-            <PrivateRoute path="/">
-              <p>User dashboard!</p>
-            </PrivateRoute>
-          </Switch>
-        </Router>
+        <ItemListingPage></ItemListingPage>
 
       </div>
     </AppContext.Provider>
