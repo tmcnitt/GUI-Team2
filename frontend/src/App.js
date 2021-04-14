@@ -1,6 +1,11 @@
 import React, { useEffect } from "react";
 import "./App.css";
 import { Users } from "./Users.js";
+
+import { AppContext } from "./AppContext.js";
+import { AuctionList } from "./AuctionList";
+import axios from "axios";
+
 import { AppContext, useProvideAppContext, setupLogin } from "./AppContext.js";
 import {
   BrowserRouter as Router,
@@ -9,6 +14,7 @@ import {
   Link
 } from "react-router-dom";
 import { PrivateRoute } from './PrivateRoute.js'
+
 
 // React functional component
 export function App() {
@@ -29,6 +35,7 @@ export function App() {
     <AppContext.Provider value={context}>
       <div className="App">
         <header className="App-header"></header>
+
         <Router>
           <Switch>
             <Route path="/login">
@@ -39,6 +46,7 @@ export function App() {
             </PrivateRoute>
           </Switch>
         </Router>
+
       </div>
     </AppContext.Provider>
   );
