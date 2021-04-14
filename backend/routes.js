@@ -166,22 +166,26 @@ module.exports = function routes(app, logger) {
         logger.error("Problem obtaining MySQL connection", err);
         res.status(400).send("Problem obtaining MySQL connection");
       } else {
-        // get all notifications
-        const sql = "SELECT * FROM notifications"
-        connection.query(sql, (err, rows) => {
-          if(err) {
-            logger.error("Error retrieving notifications: \n", err);
-            res.status(400).send({
-              success: false,
-              msg: "Error retrieving notifications"
-            })
-          } else {
-            res.status(200).send({success: true, data: rows});
-          }
-        })
+        jwt.verifyToken(req).then((user) => {
+          const userid = user.id;
+
+          // get all notifications
+          const sql = "SELECT * FROM notification WHERE user_id = ?"
+          connection.query(sql,[userid] ,(err, rows) => {
+            if(err) {
+              logger.error("Error retrieving notifications: \n", err);
+              res.status(400).send({
+                success: false,
+                msg: "Error retrieving notifications"
+              })
+            } else {
+              res.status(200).send({success: true, data: rows});
+            }
+          });
+        });
       }
-    })
-  })
+    });
+  });
 
 
   // GET /notifications/new
@@ -193,22 +197,26 @@ module.exports = function routes(app, logger) {
         res.status(400).send("Problem obtaining MySQL connection");
       } else {
         // if there is no issue obtaining a connection, execute query and release connection
-        // return unseen notifications
-        const sql = "SELECT * FROM notifications WHERE has_seen = 0"
-        connection.query(sql, (err, rows) => {
-          if(err) {
-            logger.error("Error retrieving notifications: \n", err);
-            res.status(400).send({
-              success: false,
-              msg: "Error retrieving notifications"
-            })
-          } else {
-            res.status(200).send({success: true, data: rows});
-          }
-        })
+        jwt.verifyToken(req).then((user) => {
+          const userid = user.id;
+
+          // return unseen notifications
+          const sql = "SELECT * FROM notification WHERE has_seen = 0 AND user_id = ?"
+          connection.query(sql, [userid] ,(err, rows) => {
+            if(err) {
+              logger.error("Error retrieving notifications: \n", err);
+              res.status(400).send({
+                success: false,
+                msg: "Error retrieving notifications"
+              })
+            } else {
+              res.status(200).send({success: true, data: rows});
+            }
+          });
+        });
       }
-    })
-  })
+    });
+  });
 
   // PUT /notifications/new
   app.get("/notifications/new", (req, res) => {
@@ -218,19 +226,22 @@ module.exports = function routes(app, logger) {
         logger.error("Problem obtaining MySQL connection", err);
         res.status(400).send("Problem obtaining MySQL connection");
       } else {
-        // if there is no issue obtaining a connection, execute query and release connection
-        // return unseen notifications
-        const sql = "UPDATE notifications SET has_seen = 1 WHERE has_seen = 0"
-        connection.query(sql, (err, rows) => {
-          if(err) {
-            logger.error("Error updating notifications: \n", err);
-            res.status(400).send({
-              success: false,
-              msg: "Error updating notifications"
-            })
-          } else {
-            res.status(200).send({success: true, data: rows});
-          }
+        jwt.verifyToken(req).then((user) => {
+          const userid = user.id;
+          // if there is no issue obtaining a connection, execute query and release connection
+          // return unseen notifications
+          const sql = "UPDATE notification SET has_seen = 1 WHERE has_seen = 0 AND user_id = ?"
+          connection.query(sql, [userid] ,(err, rows) => {
+            if(err) {
+              logger.error("Error updating notifications: \n", err);
+              res.status(400).send({
+                success: false,
+                msg: "Error updating notifications"
+              })
+            } else {
+              res.status(200).send({success: true, data: rows});
+            }
+          })
         })
       }
     })
