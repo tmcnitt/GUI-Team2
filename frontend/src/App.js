@@ -2,8 +2,9 @@ import React, { useEffect } from "react";
 import "./App.css";
 import { Users } from "./Users.js";
 
-import { AppContext } from "./AppContext.js";
 import { AuctionList } from "./AuctionList";
+import { ItemListingPage } from './ItemListingPage'
+
 import axios from "axios";
 
 import { AppContext, useProvideAppContext, setupLogin } from "./AppContext.js";
@@ -18,8 +19,6 @@ import { PrivateRoute } from './PrivateRoute.js'
 
 // React functional component
 export function App() {
-
-
   //Global app context
   let context = useProvideAppContext();
 
@@ -41,9 +40,16 @@ export function App() {
             <Route path="/login">
               <Users />
             </Route>
+            <Route path="/listings">
+              <AuctionList />
+            </Route>
+            <Route path="/listing">
+              <ItemListingPage />
+            </Route>
             <PrivateRoute path="/">
               <p>User dashboard!</p>
             </PrivateRoute>
+
           </Switch>
         </Router>
 
