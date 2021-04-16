@@ -351,7 +351,7 @@ module.exports = function routes(app, logger) {
                     .status(400)
                     .send({ success: false, msg: "Error updating auction information" });
                 } else {
-                  createTransaction(req, res, req.param('id'), 1, purchase_quantity, auction);
+                  createTransaction(req, res, 1, purchase_quantity, auction);
                 }
               });
             } else if (purchase_quantity == auction[0].quantity) {
@@ -365,7 +365,7 @@ module.exports = function routes(app, logger) {
                     .send({ success: false, msg: "Error updating auction information" });
                 } else {
                   const transactionID = req.body.id;
-                  createTransaction(req, res, req.param('id'), 1, purchase_quantity, auction);
+                  createTransaction(req, res, 1, purchase_quantity, auction);
                 }
               });
             } else {
@@ -812,12 +812,12 @@ function createAuctionNotification(req, res, list_user_id, text) {
   })
 }
 
-function createTransaction(req, res, listing_id, purchase_type, purchase_quantity, auction) {
+function createTransaction(req, res, purchase_type, purchase_quantity, auction) {
   pool.getConnection(function (err, connection) {
     jwt.verifyToken(req).then((user) => {
       const price = getListingPrice(auction[0].base_price, auction[0].discount_price, auction[0].discount_end, purchase_quantity)
-      const createTransaction = "INSERT INTO transactions (listing_id, list_user_id, purchase_user_id, listing_type, quantity, price) VALUES(?, ?, ?, ?, ?, ?)";
-      connection.query(createTransaction, [listing_id, auction[0].list_user_id, user.id,
+      const createTransaction = "INSERT INTO transactions ( list_user_id, purchase_user_id, listing_type, quantity, price) VALUES(?, ?, ?, ?, ?)";
+      connection.query(createTransaction, [auction[0].list_user_id, user.id,
         purchase_type, purchase_quantity, price], (err, results) => {
           connection.release();
           if (err) {
