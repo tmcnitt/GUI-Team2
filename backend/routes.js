@@ -1,5 +1,6 @@
 const pool = require("./db");
 const bcrypt = require("bcryptjs");
+const jwt = require("./jwt");
 
 module.exports = function routes(app, logger) {
   // GET /
