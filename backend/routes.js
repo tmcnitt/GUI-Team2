@@ -351,7 +351,7 @@ module.exports = function routes(app, logger) {
                     .status(400)
                     .send({ success: false, msg: "Error updating auction information" });
                 } else {
-                  createTransaction(req, res, 1, purchase_quantity, auction);
+                  createTransaction(req, res, 2, purchase_quantity, auction);
                 }
               });
             } else if (purchase_quantity == auction[0].quantity) {
@@ -365,7 +365,7 @@ module.exports = function routes(app, logger) {
                     .send({ success: false, msg: "Error updating auction information" });
                 } else {
                   const transactionID = req.body.id;
-                  createTransaction(req, res, 1, purchase_quantity, auction);
+                  createTransaction(req, res, 2, purchase_quantity, auction);
                 }
               });
             } else {

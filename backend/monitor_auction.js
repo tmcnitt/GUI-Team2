@@ -20,8 +20,8 @@ function check(logger) {
                             if (err) {
                                 logger.error("Error updating auction: \n", err);
                             } else {
-                                const sql2 = "INSERT INTO transactions (list_user_id, purchase_user_id, listing_type, price) VALUES(?, ?, ?, ?, ?, ?)"
-                                connection.query(sql2, [row.list_user_id, row.bid_user_id, 0, 1, row.current_bid], (err, result) => {
+                                const sql2 = "INSERT INTO transactions (list_user_id, purchase_user_id, listing_type, price) VALUES(?, ?, ?, ?)"
+                                connection.query(sql2, [row.list_user_id, row.bid_user_id, 1, 1, row.current_bid], (err, result) => {
                                     if (err) {
                                         logger.error("Error creating transactions: \n", err);
                                     } else {
