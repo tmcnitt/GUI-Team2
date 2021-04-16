@@ -429,25 +429,19 @@ module.exports = function routes(app, logger) {
   
             var sql = "INSERT INTO db.review (reviewee_id,reviewer_id,review_date,msg,stars) VALUES (?,?,NOW(),?,?)";
             
-            connection.beginTransaction();
             connection.query(sql, [reviewee, reviewer, msg, stars], (err, rows) => {
               if (err) {
-                connection.rollback();
-                connection.release();
                 logger.error("Error retrieving Database Information: \n", err);
                 res.status(400).send({ success: false, msg: "Error adding Review" });
               }
               else {
                 sql = "INSERT INTO notification (user_id, has_seen, date, text) VALUES (?, 0, now(), ?)";
                 connection.query(sql, [user.id, "You have a new review!"], (error, results) => {
+                  connection.release();
                   if(err) {
-                    connection.rollback();
-                    connection.release();
                     logger.error("Error adding notification: \n", err);
                     res.status(400).send({ success: false, msg: "Error adding notification" });
                   } else {
-                    connection.commit();
-                    connection.release();
                     res.status(200).send({ success: true, msg: "Added Review and created notification" })
                   }
                 })
