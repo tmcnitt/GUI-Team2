@@ -389,6 +389,31 @@ module.exports = function routes(app, logger) {
       }
     })
   })
+
+  app.get('/transactions', (req, res) => {
+    pool.getConnection(function(err, connection) {
+      if(err) {
+        // if there is an issue obtaining a connection, release the connection instance and log the error
+        logger.error("Problem obtaining MySQL connection", err);
+        res.status(400).send("Problem obtaining MySQL connection");
+      } else {
+        jwt.verifyToken(req).then((user) => {
+          const sql = "SELECT * FROM transactions WHERE purchase_user_id = ?";
+          connection.query(sql, [user.id], (err, results) => {
+            connection.release();
+            if(err) {
+              logger.error("Error getting your transactions: \n", err);
+              res
+                .status(400)
+                .send({ success: false, msg: "Error getting your transactions" });
+            } else {
+              res.status(200).send({ success: true, data: results });
+            }
+          })
+        })
+      }
+    })
+  })
 };
 
 function createAuctionNotification(req, res, auction, text)
