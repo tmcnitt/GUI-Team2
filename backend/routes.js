@@ -381,6 +381,7 @@ module.exports = function routes(app, logger) {
                     .status(400)
                     .send({ success: false, msg: "Selected quantity greater than quantity available for purchase" });
                 });
+                connection.release();
               }
             }
           });
@@ -389,6 +390,28 @@ module.exports = function routes(app, logger) {
     })
   })
 };
+
+function createAuctionNotification(req, res, auction, text)
+{
+  pool.getConnection(function (err, connection) {
+    jwt.verifyToken(req).then((user) => {
+      const sql = "INSERT INTO notification (user_id, has_seen, date, text) VALUES (?, 0, now(), ?)";
+      connection.query(sql, [auction[0].list_user_id, text], (err, results) => {
+        if(err) {
+          connection.rollback();
+          connection.release();
+          logger.error("Error creating notification: \n", err);
+          res
+            .status(400)
+            .send({ success: false, msg: "Error creating notification" });
+        } else {
+          connection.commit();
+          connection.release();
+        }
+      })
+    })
+  })
+}
 
 function createTransaction(req, res, transactionID, listing_id, purchase_type, purchase_quantity, auction) {
   pool.getConnection(function (err, connection) {
@@ -405,11 +428,11 @@ function createTransaction(req, res, transactionID, listing_id, purchase_type, p
           .status(400)
           .send({ success: false, msg: "Error creating transaction" });
         } else {
-          connection.commit();
+          createAuctionNotification(req, res, auction, "Your fixed price auction has ended");
           connection.release();
           res
             .status(200)
-            .send({ success: true, msg: "Transaction created", price: price})
+            .send({ success: true, msg: "Transaction and notification created", price: price})
         }                                                          
       })
     })
