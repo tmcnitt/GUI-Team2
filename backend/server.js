@@ -3,6 +3,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const { log, ExpressAPILogMiddleware } = require("@rama41222/node-logger");
+const monitor_auction = require("./monitor_auction")
 // const mysqlConnect = require('./db');
 const routes = require("./routes");
 
@@ -32,6 +33,8 @@ app.use(ExpressAPILogMiddleware(logger, { request: true }));
 
 // include routes
 routes(app, logger);
+
+monitor_auction.start(logger);
 
 // connecting the express object to listen on a particular port as defined in the config object.
 app.listen(config.port, config.host, (e) => {
