@@ -174,48 +174,48 @@ module.exports = function routes(app, logger) {
 
   // POST /fixed (create a fixed auction)
   app.post('/fixed', (req, res) => {
-      pool.getConnection(function (err, connection) {
-        if(err) {
-          // if there is an issue obtaining a connection, release the connection instance and log the error
-          logger.error("Problem obtaining MySQL connection", err);
-          res.status(400).send("Problem obtaining MySQL connection");
-        } else {
-          // if there is no issue obtaining a connection, execute query and release connection
-          jwt.verifyToken(req).then((user) => {
-            const id = req.body.id;
-            const product_id = req.body.product_id;
-            const list_user_id = user.id;
-            const is_finished = req.body.is_finished;
-            const is_discounted = req.body.is_discounted;
-            const description = req.body.description;
-            const base_price = req.body.base_price;
-            const quantity = req.body.quantity;
-            const sql = "INSERT INTO fixed_price (id, product_id, list_user_id, is_finished, is_discounted, description, base_price, quantity) VALUES(?, ?, ?, ?, ?, ?, ?, ?)";
+    pool.getConnection(function (err, connection) {
+      if (err) {
+        // if there is an issue obtaining a connection, release the connection instance and log the error
+        logger.error("Problem obtaining MySQL connection", err);
+        res.status(400).send("Problem obtaining MySQL connection");
+      } else {
+        // if there is no issue obtaining a connection, execute query and release connection
+        jwt.verifyToken(req).then((user) => {
+          const id = req.body.id;
+          const product_id = req.body.product_id;
+          const list_user_id = user.id;
+          const is_finished = req.body.is_finished;
+          const is_discounted = req.body.is_discounted;
+          const description = req.body.description;
+          const base_price = req.body.base_price;
+          const quantity = req.body.quantity;
+          const sql = "INSERT INTO fixed_price (id, product_id, list_user_id, is_finished, is_discounted, description, base_price, quantity) VALUES(?, ?, ?, ?, ?, ?, ?, ?)";
 
-            connection.query(sql, [id, product_id, list_user_id, is_finished, is_discounted, description, base_price, quantity], (err, results) => {
-              connection.release();
-              if(err) {
-                logger.error("Error adding fixed price auction: \n", err);
+          connection.query(sql, [id, product_id, list_user_id, is_finished, is_discounted, description, base_price, quantity], (err, results) => {
+            connection.release();
+            if (err) {
+              logger.error("Error adding fixed price auction: \n", err);
               res
                 .status(400)
                 .send({ success: false, msg: "Error adding fixed price auction" });
-              } else {
-                res
+            } else {
+              res
                 .status(200)
                 .send({ success: true, msg: "Fixed price auction successfully created" });
-              }
-            })
-          }).catch(() => {
-            res.status(400);
+            }
           })
-        }
-      })
+        }).catch(() => {
+          res.status(400);
+        })
+      }
+    })
   })
 
   // GET /fixed (get all current fixed options)
   app.get('/fixed', (req, res) => {
     pool.getConnection(function (err, connection) {
-      if(err) {
+      if (err) {
         // if there is an issue obtaining a connection, release the connection instance and log the error
         logger.error("Problem obtaining MySQL connection", err);
         res.status(400).send("Problem obtaining MySQL connection");
@@ -224,7 +224,7 @@ module.exports = function routes(app, logger) {
         const sql = "SELECT * FROM fixed_price WHERE is_finished = 0";
         connection.query(sql, (err, rows) => {
           connection.release();
-          if(err) {
+          if (err) {
             logger.error("Error getting fixed price listings: \n", err);
             res
               .status(400)
@@ -246,7 +246,7 @@ module.exports = function routes(app, logger) {
   // PUT /fixed/{id} (update an auction with discount price, description, base price, discount end)
   app.put('/fixed/', (req, res) => {
     pool.getConnection(function (err, connection) {
-      if(err) {
+      if (err) {
         // if there is an issue obtaining a connection, release the connection instance and log the error
         logger.error("Problem obtaining MySQL connection", err);
         res.status(400).send("Problem obtaining MySQL connection");
@@ -257,7 +257,7 @@ module.exports = function routes(app, logger) {
           const auction = "SELECT description, discount_price, base_price, discount_end FROM fixed_price WHERE list_user_id = ? AND id = ?";
 
           connection.query(auction, [user_id, id], (err, results) => {
-            if(err) {
+            if (err) {
               logger.error("Error retrieving auction information: \n", err);
               res
                 .status(400)
@@ -272,7 +272,7 @@ module.exports = function routes(app, logger) {
 
               connection.query(sql, [description, discount_price, base_price, discount_end, user_id, id], (error, result) => {
                 connection.release();
-                if(error) {
+                if (error) {
                   logger.error("Error updating auction information: \n", err);
                   res
                     .status(400)
@@ -295,7 +295,7 @@ module.exports = function routes(app, logger) {
   // DELETE /fixed/{id} (delete selected auction)
   app.delete('/fixed/', (req, res) => {
     pool.getConnection(function (err, connection) {
-      if(err) {
+      if (err) {
         // if there is an issue obtaining a connection, release the connection instance and log the error
         logger.error("Problem obtaining MySQL connection", err);
         res.status(400).send("Problem obtaining MySQL connection");
@@ -306,7 +306,7 @@ module.exports = function routes(app, logger) {
 
           connection.query(sql, [req.param('id'), user_id], (err, result) => {
             connection.release();
-            if(err) {
+            if (err) {
               logger.error("Error deleting fixed price auction: \n", err);
               res
                 .status(400)
@@ -318,7 +318,7 @@ module.exports = function routes(app, logger) {
             }
           })
         }).catch(() => {
-            res.status(400).end();
+          res.status(400).end();
         })
       }
     })
@@ -326,8 +326,8 @@ module.exports = function routes(app, logger) {
 
   // POST /buy/{id} (user buys auction, update quantity or end listing and create transaction)
   app.post('/buy/', (req, res) => {
-      pool.getConnection(function(err, connection) {
-      if(err) {
+    pool.getConnection(function (err, connection) {
+      if (err) {
         // if there is an issue obtaining a connection, release the connection instance and log the error
         logger.error("Problem obtaining MySQL connection", err);
         res.status(400).send("Problem obtaining MySQL connection");
@@ -388,6 +388,196 @@ module.exports = function routes(app, logger) {
       }
     })
   })
+
+
+  //POST -> /auction -> create auction
+  app.post('/auctions', async (req, res) => {
+    pool.getConnection(function (err, connection) {
+      if (err) {
+        // if there is an issue obtaining a connection, release the connection instance and log the error
+        logger.error("Problem obtaining MySQL connection", err);
+        res.status(400).send("Problem obtaining MySQL connection");
+      } else {
+        jwt.verifyToken(req).then((user) => {
+          const current_bid = req.body.current_bid;
+          const list_user_id = user.id;
+          const bid_user_id = 0;
+          const product_id = req.body.product_id;
+          const show_user_bid = req.body.show_user_bid;
+          const is_finished = false;
+          const start_date = req.body.start_date;
+          const end_date = req.body.end_date;
+          const description = req.body.description;
+
+          const sql = "INSERT INTO auction (current_bid,list_user_id,bid_user_id,product_id,show_user_bid,is_finished,start_date,end_date,description) VALUES (?,?,?,?,?,?,?,?,?)";
+          connection.query(sql, [current_bid, list_user_id, bid_user_id, product_id, show_user_bid, is_finished, start_date, end_date, description], (err, result) => {
+            connection.release();
+            if (err) {
+              logger.error("Error creating auction: \n", err);
+              res
+                .status(400)
+                .send({ success: false, msg: "Error creating auction" });
+            } else {
+              res
+                .status(200)
+                .send({ success: true, msg: "Auction successfully created" });
+            }
+          });
+        })
+      }
+    });
+  })
+
+
+  //GET -> /auctions -> get all running auctions
+  app.get('/auctions', function (req, res) {
+    pool.getConnection(function (err, connection) {
+      if (err) {
+        // if there is an issue obtaining a connection, release the connection instance and log the error
+        logger.error("Problem obtaining MySQL connection", err, rows);
+        res.status(400).send("Problem obtaining MySQL connection");
+      }
+      else {
+        const sql = "SELECT * FROM auction WHERE is_finished = false AND now() > start_date AND now() < end_date";
+        connection.query(sql, (err, rows) => {
+          connection.release();
+          if (err) {
+            logger.error("Error retrieving auctions: \n", err);
+            res.status(400).send({
+              success: false,
+              msg: "Error retrieving auctions",
+            });
+          } else {
+            res.status(200).send({ success: true, data: rows });
+          }
+        });
+      }
+    });
+  });
+
+  //DELETE -> /auctions/:id -> stop auction
+  app.delete('/auctions/:id', async (req, res) => {
+    pool.getConnection(function (err, connection) {
+      if (err) {
+        // if there is an issue obtaining a connection, release the connection instance and log the error
+        logger.error("Problem obtaining MySQL connection", err, rows);
+        res.status(400).send("Problem obtaining MySQL connection");
+      }
+      else {
+        jwt.verifyToken(req).then((user) => {
+          const id = req.body.id;
+          const user_id = user.id;
+          const sql = "DELETE FROM auction WHERE auction.id = ? AND auction.list_user_id = ?";
+          connection.query(sql, [id, user_id], (err, result) => {
+            connection.release();
+            if (err) {
+              logger.error("Error deleting auction: \n", err);
+              res.status(400).send({
+                success: false,
+                msg: "Error deleting auctions",
+              });
+            } else {
+              res.status(200).send({ success: true, msg: "Deleted auction", });
+            }
+          });
+        })
+      }
+    });
+  });
+
+  //PUT /auction/:id -> upacte action, options: descpription,end_date
+  app.put('/auctions/:id', async (req, res) => {
+    pool.getConnection(function (err, connection) {
+      if (err) {
+        // if there is an issue obtaining a connection, release the connection instance and log the error
+        logger.error("Problem obtaining MySQL connection", err, rows);
+        res.status(400).send("Problem obtaining MySQL connection");
+      }
+      else {
+        jwt.verifyToken(req).then((user) => {
+          const user_id = user.id;
+          const id = req.param('id');
+
+          const sql = "SELECT description, end_date, show_user_bid FROM auction WHERE list_user_id = ? AND id = ?";
+          connection.query(sql, [user_id, id], (err, results) => {
+            if (err) {
+              logger.error("Error retrieving auction information: \n", err);
+              res
+                .status(400)
+                .send({ success: false, msg: "Error retrieving auction information" });
+            } else {
+              const description = req.body.description || results[0].description;
+              const end_date = req.body.end_date || results[0].end_date;
+              const show_user_bid = req.body.show_user_bid || results[0].show_user_bid;
+
+
+              const sql2 = "UPDATE auction SET description = ?, end_date = ?, show_user_bid = ? WHERE list_user_id = ? AND id = ?";
+              connection.query(sql2, [description, end_date, show_user_bid, user_id, id], (error, result) => {
+                connection.release();
+                if (error) {
+                  logger.error("Error updating auction information: \n", err);
+                  res
+                    .status(400)
+                    .send({ success: false, msg: "Error updating auction information" });
+                } else {
+                  res
+                    .status(200)
+                    .send({ succes: true, msg: "Auction updated" })
+                }
+              })
+            }
+          });
+
+        });
+      }
+    });
+  });
+
+
+  //POST /auction/:id/bid -> User bids on auction, sends price
+  app.post('/auctions/:id/bid', async (req, res) => {
+    pool.getConnection(function (err, connection) {
+      if (err) {
+        // if there is an issue obtaining a connection, release the connection instance and log the error
+        logger.error("Problem obtaining MySQL connection", err, rows);
+        res.status(400).send("Problem obtaining MySQL connection");
+      }
+      else {
+        jwt.verifyToken(req).then((user) => {
+          const id = req.param('id');
+          const new_bid = req.body.new_bid;
+          const bid_user_id = user.id;
+
+          const sql = "UPDATE auction SET auction.current_bid = ? WHERE auction.id = ? AND is_finished = false AND ? > auction.current_bid";
+          connection.query(sql, [new_bid, id, new_bid], (err, result) => {
+            if (err) {
+              logger.error("Error updating bid: \n", err);
+              res
+                .status(400)
+                .send({ success: false, msg: "Error updating bid" });
+            }
+            else {
+              const sql1 = "UPDATE auction SET auction.bid_user_id = ? WHERE auction.id = ?";
+              connection.query(sql1, [bid_user_id, id], (err, result) => {
+                connection.release();
+                if (err) {
+                  logger.error("Error updating auction: \n", err);
+                  res
+                    .status(400)
+                    .send({ success: false, msg: "Error updating auction" });
+                }
+                else {
+                  res
+                    .status(200)
+                    .send({ success: true, msg: "User successfully Updated" });
+                }
+              });
+            }
+          });
+        })
+      }
+    });
+  });
 };
 
 function createTransaction(req, res, transactionID, listing_id, purchase_type, purchase_quantity, auction) {
@@ -396,22 +586,22 @@ function createTransaction(req, res, transactionID, listing_id, purchase_type, p
       const price = getListingPrice(auction[0].base_price, auction[0].discount_price, auction[0].discount_end, purchase_quantity)
       const createTransaction = "INSERT INTO transactions VALUES(?, ?, ?, ?, ?, ?, ?)";
       connection.query(createTransaction, [transactionID, listing_id, auction[0].list_user_id, user.id,
-                      purchase_type, purchase_quantity, price], (err, results) => {
-        if(err) {
-        connection.rollback();
-        connection.release();
-        logger.error("Error creating transaction: \n", err);
-        res
-          .status(400)
-          .send({ success: false, msg: "Error creating transaction" });
-        } else {
-          connection.commit();
-          connection.release();
-          res
-            .status(200)
-            .send({ success: true, msg: "Transaction created", price: price})
-        }                                                          
-      })
+        purchase_type, purchase_quantity, price], (err, results) => {
+          if (err) {
+            connection.rollback();
+            connection.release();
+            logger.error("Error creating transaction: \n", err);
+            res
+              .status(400)
+              .send({ success: false, msg: "Error creating transaction" });
+          } else {
+            connection.commit();
+            connection.release();
+            res
+              .status(200)
+              .send({ success: true, msg: "Transaction created", price: price })
+          }
+        })
     })
   })
 }
@@ -420,9 +610,9 @@ function getListingPrice(base_price, discount_price, discount_end, quantity) {
   var curr = new Date();
   var discount = new Date(discount_end);
 
-  if(curr < discount) {
+  if (curr < discount) {
     return discount_price * quantity;
-  } else if(curr > discount) {
+  } else if (curr > discount) {
     return base_price * quantity;
   }
 }
