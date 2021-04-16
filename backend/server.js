@@ -1,6 +1,7 @@
 require("dotenv").config();
 const express = require("express");
 const bodyParser = require("body-parser");
+const monitor_auction = require('./monitor_auction');
 const cors = require("cors");
 const { log, ExpressAPILogMiddleware } = require("@rama41222/node-logger");
 // const mysqlConnect = require('./db');
@@ -32,6 +33,9 @@ app.use(ExpressAPILogMiddleware(logger, { request: true }));
 
 // include routes
 routes(app, logger);
+
+//We need to check for auctions ending
+monitor_auction.start(logger);
 
 // connecting the express object to listen on a particular port as defined in the config object.
 app.listen(config.port, config.host, (e) => {

@@ -548,7 +548,7 @@ module.exports = function routes(app, logger) {
           const new_bid = req.body.new_bid;
           const bid_user_id = user.id;
 
-          const sql = "UPDATE auction SET auction.current_bid = ? WHERE auction.id = ? AND is_finished = false AND ? > auction.current_bid";
+          const sql = "UPDATE auction SET auction.current_bid = ? WHERE auction.id = ? AND is_finished = false AND ? > auction.current_bid AND now() < end_date";
           connection.query(sql, [new_bid, id, new_bid], (err, result) => {
             if (err) {
               logger.error("Error updating bid: \n", err);
