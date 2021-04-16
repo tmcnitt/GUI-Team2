@@ -220,7 +220,7 @@ module.exports = function routes(app, logger) {
   });
 
   // PUT /notifications/new
-  app.get("/notifications/new", (req, res) => {
+  app.put("/notifications/new", (req, res) => {
     pool.getConnection(function(err, connection) {
       if (err) {
         // if there is an issue obtaining a connection, release the connection instance and log the error
