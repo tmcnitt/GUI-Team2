@@ -749,7 +749,51 @@ module.exports = function routes(app, logger) {
       }
     })
   })
-};
+
+  app.get("/listings/sell", (req, res) => {
+    pool.getConnection(function (err, connection) {
+      if (err) {
+        // if there is an issue obtaining a connection, release the connection instance and log the error
+        logger.error("Problem obtaining MySQL connection", err);
+        res.status(400).send("Problem obtaining MySQL connection");
+      } else {
+        jwt.verifyToken(req).then((user) => {
+          const userid = user.id;
+
+          let results = [];
+          let queries = [
+            "SELECT * FROM auction WHERE list_user_id = ?",
+            "SELECT * FROM fixed_price WHERE list_user_id = ?"
+          ]
+
+          let promises = []
+          queries.forEach((query) => {
+            promises.push(new Promise((resolve, reject) => {
+              connection.query(query, [userid], (err, rows) => {
+                if (err) {
+                  reject()
+                } else {
+                  results = results.concat(rows)
+                  resolve()
+                }
+              })
+            }))
+          })
+
+
+          Promise.all(promises).then(() => {
+            connection.release()
+            res.status(200).send({ success: true, data: results });
+          }).catch(() => {
+            res
+              .status(400)
+              .send({ success: false, msg: "Error getting listings" });
+          })
+        })
+      }
+    })
+  })
+}
 
 function createAuctionNotification(req, res, list_user_id, text) {
   pool.getConnection(function (err, connection) {
