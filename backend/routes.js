@@ -182,7 +182,6 @@ module.exports = function routes(app, logger) {
         } else {
           // if there is no issue obtaining a connection, execute query and release connection
           jwt.verifyToken(req).then((user) => {
-            const id = req.body.id;
             const product_id = req.body.product_id;
             const list_user_id = user.id;
             const is_finished = req.body.is_finished;
@@ -190,9 +189,9 @@ module.exports = function routes(app, logger) {
             const description = req.body.description;
             const base_price = req.body.base_price;
             const quantity = req.body.quantity;
-            const sql = "INSERT INTO fixed_price (id, product_id, list_user_id, is_finished, is_discounted, description, base_price, quantity) VALUES(?, ?, ?, ?, ?, ?, ?, ?)";
+            const sql = "INSERT INTO fixed_price (product_id, list_user_id, is_finished, is_discounted, description, base_price, quantity) VALUES( ?, ?, ?, ?, ?, ?, ?)";
 
-            connection.query(sql, [id, product_id, list_user_id, is_finished, is_discounted, description, base_price, quantity], (err, results) => {
+            connection.query(sql, [product_id, list_user_id, is_finished, is_discounted, description, base_price, quantity], (err, results) => {
               connection.release();
               if(err) {
                 logger.error("Error adding fixed price auction: \n", err);
@@ -356,8 +355,7 @@ module.exports = function routes(app, logger) {
                       .status(400)
                       .send({ success: false, msg: "Error updating auction information" });
                   } else {
-                    const transactionID = req.body.id;
-                    createTransaction(req, res, transactionID, req.param('id'), 1, purchase_quantity, auction);
+                    createTransaction(req, res, req.param('id'), 1, purchase_quantity, auction);
                   }
                 });
               } else if (purchase_quantity == auction[0].quantity) {
@@ -372,7 +370,7 @@ module.exports = function routes(app, logger) {
                       .send({ success: false, msg: "Error updating auction information" });
                   } else {
                     const transactionID = req.body.id;
-                    createTransaction(req, res, transactionID, req.param('id'), 1, purchase_quantity, auction);
+                    createTransaction(req, res, req.param('id'), 1, purchase_quantity, auction);
                   }
                 });
               } else {
@@ -414,6 +412,80 @@ module.exports = function routes(app, logger) {
       }
     })
   })
+
+    // Reviews POST /reviews/{userid}
+    app.post("/reviews/", (req, res) => {
+      pool.getConnection(function (err, connection) {
+        if (err) {
+          // if there is an issue obtaining a connection, release the connection instance and log the error
+          logger.error("Problem obtaining MySQL connection", err);
+          res.status(400).send("Problem obtaining MySQL connection");
+        } else {
+          jwt.verifyToken(req).then((user) => {
+            const reviewee = req.body.reviewee;
+            const reviewer = user.id;
+            const msg = req.body.msg;
+            const stars = req.body.stars;
+  
+            var sql = "INSERT INTO db.review (reviewee_id,reviewer_id,review_date,msg,stars) VALUES (?,?,NOW(),?,?)";
+            
+            connection.beginTransaction();
+            connection.query(sql, [reviewee, reviewer, msg, stars], (err, rows) => {
+              if (err) {
+                connection.rollback();
+                connection.release();
+                logger.error("Error retrieving Database Information: \n", err);
+                res.status(400).send({ success: false, msg: "Error adding Review" });
+              }
+              else {
+                sql = "INSERT INTO notification (user_id, has_seen, date, text) VALUES (?, 0, now(), ?)";
+                connection.query(sql, [user.id, "You have a new review!"], (error, results) => {
+                  if(err) {
+                    connection.rollback();
+                    connection.release();
+                    logger.error("Error adding notification: \n", err);
+                    res.status(400).send({ success: false, msg: "Error adding notification" });
+                  } else {
+                    connection.commit();
+                    connection.release();
+                    res.status(200).send({ success: true, msg: "Added Review and created notification" })
+                  }
+                })
+              }
+            })
+          });
+        }
+      });
+    });
+  
+  
+    // Reviews GET /reviews/{userid}
+    app.get("/reviews/", (req, res) => {
+      pool.getConnection(function (err, connection) {
+        if (err) {
+          // if there is an issue obtaining a connection, release the connection instance and log the error
+          logger.error("Problem obtaining MySQL connection", err);
+          res.status(400).send("Problem obtaining MySQL connection");
+        } else {
+          jwt.verifyToken(req).then((user) => {
+            const reviewer = user.id;
+  
+            var sql = "SELECT * FROM db.review WHERE reviewer_id = ?";
+  
+            connection.query(sql, [reviewer], (err, rows) => {
+              connection.release();
+              if (err) {
+                logger.error("Error retrieving Database Information: \n", err);
+                res.status(400).send({ success: false, msg: "Error retrieving Review" });
+              }
+              else {
+                res.status(200).send({ success: true, msg: "Got User Reviews", data: rows })
+              }
+            })
+          });
+        }
+      });
+    });
 };
 
 function createAuctionNotification(req, res, auction, text)
@@ -438,12 +510,12 @@ function createAuctionNotification(req, res, auction, text)
   })
 }
 
-function createTransaction(req, res, transactionID, listing_id, purchase_type, purchase_quantity, auction) {
+function createTransaction(req, res, listing_id, purchase_type, purchase_quantity, auction) {
   pool.getConnection(function (err, connection) {
     jwt.verifyToken(req).then((user) => {
       const price = getListingPrice(auction[0].base_price, auction[0].discount_price, auction[0].discount_end, purchase_quantity)
-      const createTransaction = "INSERT INTO transactions VALUES(?, ?, ?, ?, ?, ?, ?)";
-      connection.query(createTransaction, [transactionID, listing_id, auction[0].list_user_id, user.id,
+      const createTransaction = "INSERT INTO transactions (listing_id, list_user_id, purchase_user_id, listing_type, quantity, price) VALUES(?, ?, ?, ?, ?, ?)";
+      connection.query(createTransaction, [listing_id, auction[0].list_user_id, user.id,
                       purchase_type, purchase_quantity, price], (err, results) => {
         if(err) {
         connection.rollback();
