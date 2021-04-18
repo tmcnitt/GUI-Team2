@@ -48,5 +48,4 @@ export function setupLogin(context) {
     } else {
         context.setSetup(true);
     }
-
 }
