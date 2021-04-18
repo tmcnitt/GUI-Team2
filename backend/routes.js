@@ -288,7 +288,7 @@ module.exports = function routes(app, logger) {
   })
 
   // POST /buy/{id} (user buys auction, update quantity or end listing and create transaction)
-  app.post('/buy/', (req, res) => {
+  app.post('/buy/:id', (req, res) => {
     const getAuction = "SELECT * FROM fixed_price WHERE id = ?";
     pool.query(getAuction, [req.param('id')], (err, auction) => {
       if (err) {
@@ -297,12 +297,17 @@ module.exports = function routes(app, logger) {
           .status(400)
           .send({ success: false, msg: "Error retrieving auction information" });
       } else {
+        if (!auction[0]) {
+          res
+            .status(400)
+            .send({ success: false, msg: "Could not find auction" });
+          return
+        }
         const purchase_quantity = req.body.purchase_quantity;
         if (purchase_quantity < auction[0].quantity) {
           const quantity_remaining = auction[0].quantity - purchase_quantity;
           const update = "UPDATE fixed_price SET quantity = ? WHERE id = ?";
           pool.query(update, [quantity_remaining, req.param('id')], (updateErr) => {
-            pool.release();
             if (err) {
               logger.error("Error updating auction information: \n", err);
               res
