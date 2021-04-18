@@ -2,8 +2,6 @@ import React, { useEffect } from "react";
 import "./App.css";
 import { Users } from "./Users.js";
 import { ItemListingPage } from "./ItemListingPage";
-
-import { ItemListingPage } from './ItemListingPage'
 import { UserDashboard } from './UserDashboard'
 import { ListingPage } from './ListingPage'
 
