@@ -4,6 +4,8 @@ import { Users } from "./Users.js";
 
 import { AuctionList } from "./AuctionList";
 import { ItemListingPage } from './ItemListingPage'
+import { UserDashboard } from './UserDashboard'
+import { ListingPage } from './ListingPage'
 
 import axios from "axios";
 
@@ -41,13 +43,13 @@ export function App() {
               <Users />
             </Route>
             <Route path="/listings">
-              <AuctionList />
+              <ListingPage />
             </Route>
             <Route path="/listing">
               <ItemListingPage />
             </Route>
             <PrivateRoute path="/">
-              <p>User dashboard!</p>
+              <UserDashboard />
             </PrivateRoute>
 
           </Switch>

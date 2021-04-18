@@ -245,8 +245,8 @@ module.exports = function routes(app, logger) {
         ON db.users.id = sell_history.list_user_id 
         LEFT JOIN products 
         ON products.id = fixed_price.product_id
-        WHERE is_finished = 0
-      ` + mod;
+        WHERE is_finished = 0 AND fixed_price.list_user_id = 16
+      ` + mod + " HAVING product_name IS NOT NULL";
 
     pool.query(sql, [id], (err, rows) => {
       if (err) {
@@ -390,7 +390,9 @@ module.exports = function routes(app, logger) {
           purchaser_reviews.stars as purchaser_reviews_stars,
           lister_reviews.stars as lister_reviews_stars,
           purchase_user_id = ? as is_purchaser,
-          products.name as product_name
+          products.name as product_name,
+          list_user.username as lister_username,
+          purchase_user.username as purchaser_username
         FROM 
           transactions 
         LEFT JOIN
@@ -406,6 +408,13 @@ module.exports = function routes(app, logger) {
         LEFT JOIN
           products
         ON products.id = transactions.product_id  
+        LEFT JOIN
+          users as purchase_user
+        ON purchase_user.id = transactions.purchase_user_id  
+        LEFT JOIN
+          users as list_user
+        ON list_user.id = transactions.list_user_id
+
         WHERE 
           purchase_user_id = ? OR list_user_id = ?
         `;
@@ -558,7 +567,7 @@ module.exports = function routes(app, logger) {
       WHERE 
         is_finished = false AND 
         now() > start_date AND 
-        now() < end_date` + mod;
+        now() < end_date` + mod + " HAVING product_name IS NOT NULL";
 
     pool.query(sql, [id], (err, rows) => {
       if (err) {
@@ -744,7 +753,7 @@ function createAuctionNotification(req, res, list_user_id, text) {
 function createTransaction(req, res, purchase_type, purchase_quantity, auction) {
   jwt.verifyToken(req).then((user) => {
     const price = getListingPrice(auction[0].base_price, auction[0].discount_price, auction[0].discount_end, purchase_quantity)
-    const createTransaction = "INSERT INTO transactions ( list_user_id, purchase_user_id, listing_type, quantity, price, product_id) VALUES(?, ?, ?, ?, ?, ?)";
+    const createTransaction = "INSERT INTO transactions ( list_user_id, purchase_user_id, listing_type, quantity, price, product_id, date) VALUES(?, ?, ?, ?, ?, ?, NOW())";
     pool.query(createTransaction, [auction[0].list_user_id, user.id,
       purchase_type, purchase_quantity, price, auction[0].product_id], (err, results) => {
         if (err) {
