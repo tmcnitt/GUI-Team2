@@ -3,8 +3,9 @@ import "./App.css";
 import { Users } from "./Users.js";
 import { ItemListingPage } from "./ItemListingPage";
 
-import { AuctionList } from "./AuctionList";
-import axios from "axios";
+import { ItemListingPage } from './ItemListingPage'
+import { UserDashboard } from './UserDashboard'
+import { ListingPage } from './ListingPage'
 
 import { AppContext, useProvideAppContext, setupLogin } from "./AppContext.js";
 import {
@@ -18,8 +19,6 @@ import { PrivateRoute } from './PrivateRoute.js'
 
 // React functional component
 export function App() {
-
-
   //Global app context
   let context = useProvideAppContext();
 
@@ -36,7 +35,23 @@ export function App() {
       <div className="App">
         <header className="App-header"></header>
 
-        <ItemListingPage></ItemListingPage>
+        <Router>
+          <Switch>
+            <Route path="/login">
+              <Users />
+            </Route>
+            <Route path="/listings">
+              <ListingPage />
+            </Route>
+            <Route path="/listing">
+              <ItemListingPage />
+            </Route>
+            <PrivateRoute path="/">
+              <UserDashboard />
+            </PrivateRoute>
+
+          </Switch>
+        </Router>
 
       </div>
     </AppContext.Provider>
