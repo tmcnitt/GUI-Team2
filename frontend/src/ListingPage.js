@@ -1,11 +1,7 @@
-import React, { useState, useRef, useEffect, useContext, useLayoutEffect } from "react";
+import React, { useState } from "react";
 
 import './AuctionList.css'
-import listings from "./dummyData.js";
 import { CreateListingModal } from "./CreateListingModal";
-import axios from "axios";
-import { AppContext } from "./AppContext.js";
-import { capitalize, relativeTime } from './utils'
 import { AuctionList } from './AuctionList'
 
 

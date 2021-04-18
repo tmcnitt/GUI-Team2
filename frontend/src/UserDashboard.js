@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useContext, useLayoutEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { AppContext } from "./AppContext.js";
 import axios from "axios";
 import { axiosJWTHeader } from './utils'

@@ -2,13 +2,13 @@ import React, { useEffect, useState, useContext, useRef } from "react"
 import { CreateProductModal } from './CreateProductModal'
 import { AppContext } from "./AppContext.js";
 import axios from "axios";
-import { capitalize, axiosJWTHeader, validateFixed, validateAuction } from './utils'
+import { capitalize, axiosJWTHeader, validateFixed, validateAuction, dateToISOLikeButLocal } from './utils'
 import { Modal } from 'bootstrap'
 
 function AuctionForm({ values, handleInputChange }) {
 
     const setNow = () => {
-        handleInputChange({ target: { name: "start_date", value: new Date().toISOString().split(".")[0] } })
+        handleInputChange({ target: { name: "start_date", value: dateToISOLikeButLocal(new Date()) } })
     }
     return (
         <>
@@ -52,7 +52,7 @@ function AuctionForm({ values, handleInputChange }) {
                 </div>
                 <div className="col-7">
                     <div className="form-check form-check-inline col-form-label">
-                        <input className="form-check-input" name="show_user_bid" id="show_user_bid" onChange={handleInputChange} value={values.show_user_bid} type="checkbox" id="gridCheck1" />
+                        <input className="form-check-input" name="show_user_bid" id="show_user_bid" onChange={handleInputChange} value={values.show_user_bid} type="checkbox" />
                     </div>
                 </div>
             </div >
@@ -116,7 +116,7 @@ export function CreateListingModal({ show, setShow }) {
 
     const handleInputChange = (e) => {
         let { name, value, checked } = e.target;
-        if (e.target.type == "checkbox") {
+        if (e.target.type === "checkbox") {
             value = checked
         }
         setValues({ ...values, [name]: value });
@@ -125,7 +125,7 @@ export function CreateListingModal({ show, setShow }) {
     const submit = () => {
         let route = ""
         let error = false
-        if (listType == "auction") {
+        if (listType === "auction") {
             route = "/auctions"
             error = validateAuction(values)
         } else {
