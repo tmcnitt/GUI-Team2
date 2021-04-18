@@ -14,30 +14,21 @@ const checkJWT = (token) => {
   }
 
   return new Promise((resolve, reject) => {
-    pool.getConnection((err, connection) => {
-      if (err) {
-        connection.release();
-        return { success: false };
-      }
-
-      connection.query(
-        "SELECT * FROM users WHERE id = ?",
-        [decoded],
-        (err, result) => {
-          connection.release();
-          if (err) {
-            reject();
-          } else {
-            resolve(result[0]);
-          }
+    pool.query(
+      "SELECT * FROM users WHERE id = ?",
+      [decoded],
+      (err, result) => {
+        if (err) {
+          reject();
+        } else {
+          resolve(result[0]);
         }
-      );
-    });
+      });
   });
 };
 
 module.exports.verifyToken = (req) => {
-  const bearerHeader = req.headers["authorization"];
+  const bearerHeader = req.header("authorization");
 
   return new Promise((resolve, reject) => {
     if (bearerHeader) {
