@@ -16,6 +16,7 @@ const checkJWT = (token) => {
   return new Promise((resolve, reject) => {
     pool.getConnection((err, connection) => {
       if (err) {
+        connection.release();
         return { success: false };
       }
 

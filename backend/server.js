@@ -2,8 +2,12 @@ require("dotenv").config();
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
-const { log, ExpressAPILogMiddleware } = require("@rama41222/node-logger");
-const monitor_auction = require("./monitor_auction")
+const { log } = require("@rama41222/node-logger");
+const morgan = require('morgan')
+
+const monitor_auction = require("./monitor_auction");
+const fileUpload = require('express-fileupload');
+
 // const mysqlConnect = require('./db');
 const routes = require("./routes");
 
@@ -17,6 +21,8 @@ const config = {
 // create the express.js object
 const app = express();
 
+app.use(fileUpload())
+
 // create a logger object.  Using logger is preferable to simply writing to the console.
 const logger = log({ label: config.name, file: false, console: true });
 
@@ -29,7 +35,7 @@ app.use(
 );
 
 // eslint-disable-next-line new-cap
-app.use(ExpressAPILogMiddleware(logger, { request: true }));
+app.use(morgan('tiny'));
 
 // include routes
 routes(app, logger);

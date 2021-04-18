@@ -143,8 +143,14 @@ module.exports = function routes(app, logger) {
     });
   });
 
+  // Products GET returns all prodcuts
+  app.get("/products/:id", (req, res) => {
+    const id = req.param('id');
+    res.sendFile(__dirname + '/imgs/' + id + ".jpeg")
+  });
+
   // Products POST create new product
-  app.post("/product", (req, res) => {
+  app.post("/products", (req, res) => {
     pool.getConnection(function (err, connection) {
       if (err) {
         // if there is an issue obtaining a connection, release the connection instance and log the error
@@ -155,6 +161,10 @@ module.exports = function routes(app, logger) {
         const name = req.body.name;
         const sql = "INSERT INTO products (name) VALUES(?)";
 
+        if (!req.files || Object.keys(req.files).length === 0) {
+          return res.status(400).send('No files were uploaded.');
+        }
+
         connection.query(sql, [name], (err, result) => {
           connection.release();
           if (err) {
@@ -163,9 +173,23 @@ module.exports = function routes(app, logger) {
               .status(400)
               .send({ success: false, msg: "Error adding product" });
           } else {
-            res
-              .status(200)
-              .send({ success: true, msg: "Product successfully added" });
+
+            let file = req.files.file;
+            uploadPath = __dirname + '/imgs/' + result.insertId + ".jpeg"
+
+            // Use the mv() method to place the file somewhere on your server
+            file.mv(uploadPath, function (err) {
+              if (err) {
+                res
+                  .status(400)
+                  .send({ success: false, msg: "Error uploading image" });
+                return
+              }
+
+              res
+                .status(200)
+                .send({ success: true, msg: "Product successfully added" });
+            });
           }
         });
       }
