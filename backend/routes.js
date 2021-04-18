@@ -356,7 +356,7 @@ module.exports = function routes(app, logger) {
                 .status(400)
                 .send({ success: false, msg: "Error updating auction information" });
             } else {
-              createTransaction(req, res, 2, purchase_quantity, auction, "Some of your fixed auction has been sold.");
+              createTransactionAndNotification(req, res, 2, purchase_quantity, auction, "Some of your fixed auction has been sold.");
             }
           });
         } else if (purchase_quantity == auction[0].quantity) {
@@ -369,7 +369,7 @@ module.exports = function routes(app, logger) {
                 .send({ success: false, msg: "Error updating auction information" });
             } else {
               const transactionID = req.body.id;
-              createTransaction(req, res, 2, purchase_quantity, auction, "Your fixed price auction has ended");
+              createTransactionAndNotification(req, res, 2, purchase_quantity, auction, "Your fixed price auction has ended");
             }
           });
         } else {
@@ -587,18 +587,31 @@ module.exports = function routes(app, logger) {
     jwt.verifyToken(req).then((user) => {
       const id = req.body.id;
       const user_id = user.id;
-      const sql = "DELETE FROM auction WHERE auction.id = ? AND auction.list_user_id = ?";
-      pool.query(sql, [id, user_id], (err, result) => {
+
+      const get = "SELECT * FROM auction auction.id = ? AND auction.list_user_id = ?"
+      pool.query(get, [id, user_id], (err, result) => {
         if (err) {
-          logger.error("Error deleting auction: \n", err);
           res.status(400).send({
             success: false,
-            msg: "Error deleting auctions",
+            msg: "Error deleteing auction",
           });
-        } else {
-          res.status(200).send({ success: true, msg: "Deleted auction", });
+          return
         }
-      });
+
+        const sql = "DELETE FROM auction WHERE auction.id = ? AND auction.list_user_id = ?";
+        pool.query(sql, [id, user_id], (err) => {
+          if (err) {
+            logger.error("Error deleting auction: \n", err);
+            res.status(400).send({
+              success: false,
+              msg: "Error deleting auctions",
+            });
+          } else {
+            createNotification(req, res, result[0].bid_user_id, "An auction you were winning was cancelled!")
+            res.status(200).send({ success: true, msg: "Deleted auction", });
+          }
+        });
+      })
     }).catch(() => {
       res.status(400).end();
     });;
@@ -731,26 +744,19 @@ module.exports = function routes(app, logger) {
   })
 }
 
-function createAuctionNotification(req, res, list_user_id, text) {
-  pool.getConnection(function (err, connection) {
-    jwt.verifyToken(req).then((user) => {
-      const sql = "INSERT INTO notification (user_id, has_seen, date, text) VALUES (?, 0, now(), ?)";
-      connection.query(sql, [list_user_id, text], (err, results) => {
-        connection.release();
-        if (err) {
-          logger.error("Error creating notification: \n", err);
-          res
-            .status(400)
-            .send({ success: false, msg: "Error creating notification" });
-        }
-      })
-    }).catch(() => {
-      res.status(400).end();
-    });
+function createNotification(req, res, user_id, text) {
+  const sql = "INSERT INTO notification (user_id, has_seen, date, text) VALUES (?, 0, now(), ?)";
+  pool.query(sql, [user_id, text], (err, results) => {
+    if (err) {
+      logger.error("Error creating notification: \n", err);
+      res
+        .status(400)
+        .send({ success: false, msg: "Error creating notification" });
+    }
   })
 }
 
-function createTransaction(req, res, purchase_type, purchase_quantity, auction, msg) {
+function createTransactionAndNotification(req, res, purchase_type, purchase_quantity, auction, msg) {
   jwt.verifyToken(req).then((user) => {
     const price = getListingPrice(auction[0].base_price, auction[0].discount_price, auction[0].discount_end, purchase_quantity)
     const createTransaction = "INSERT INTO transactions ( list_user_id, purchase_user_id, listing_type, quantity, price, product_id, date) VALUES(?, ?, ?, ?, ?, ?, NOW())";
@@ -762,7 +768,7 @@ function createTransaction(req, res, purchase_type, purchase_quantity, auction, 
             .status(400)
             .send({ success: false, msg: "Error creating transaction" });
         } else {
-          createAuctionNotification(req, res, auction[0].list_user_id, msg);
+          createNotification(req, res, auction[0].list_user_id, msg);
           res
             .status(200)
             .send({ success: true, msg: "Transaction and notification created", price: price })
