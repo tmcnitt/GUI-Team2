@@ -307,7 +307,7 @@ module.exports = function routes(app, logger) {
         if (purchase_quantity < auction[0].quantity) {
           const quantity_remaining = auction[0].quantity - purchase_quantity;
           const update = "UPDATE fixed_price SET quantity = ? WHERE id = ?";
-          pool.query(update, [quantity_remaining, req.param('id')], (updateErr) => {
+          pool.query(update, [quantity_remaining, req.param('id')], (err) => {
             if (err) {
               logger.error("Error updating auction information: \n", err);
               res
@@ -635,26 +635,23 @@ function createAuctionNotification(req, res, list_user_id, text) {
 }
 
 function createTransaction(req, res, purchase_type, purchase_quantity, auction) {
-  pool.getConnection(function (err, connection) {
-    jwt.verifyToken(req).then((user) => {
-      const price = getListingPrice(auction[0].base_price, auction[0].discount_price, auction[0].discount_end, purchase_quantity)
-      const createTransaction = "INSERT INTO transactions ( list_user_id, purchase_user_id, listing_type, quantity, price) VALUES(?, ?, ?, ?, ?)";
-      connection.query(createTransaction, [auction[0].list_user_id, user.id,
-        purchase_type, purchase_quantity, price], (err, results) => {
-          connection.release();
-          if (err) {
-            logger.error("Error creating transaction: \n", err);
-            res
-              .status(400)
-              .send({ success: false, msg: "Error creating transaction" });
-          } else {
-            createAuctionNotification(req, res, auction[0].list_user_id, "Your fixed price auction has ended");
-            res
-              .status(200)
-              .send({ success: true, msg: "Transaction and notification created", price: price })
-          }
-        })
-    })
+  jwt.verifyToken(req).then((user) => {
+    const price = getListingPrice(auction[0].base_price, auction[0].discount_price, auction[0].discount_end, purchase_quantity)
+    const createTransaction = "INSERT INTO transactions ( list_user_id, purchase_user_id, listing_type, quantity, price, product_id) VALUES(?, ?, ?, ?, ?, ?)";
+    pool.query(createTransaction, [auction[0].list_user_id, user.id,
+      purchase_type, purchase_quantity, price, auction[0].product_id], (err, results) => {
+        if (err) {
+          logger.error("Error creating transaction: \n", err);
+          res
+            .status(400)
+            .send({ success: false, msg: "Error creating transaction" });
+        } else {
+          createAuctionNotification(req, res, auction[0].list_user_id, "Your fixed price auction has ended");
+          res
+            .status(200)
+            .send({ success: true, msg: "Transaction and notification created", price: price })
+        }
+      })
   })
 }
 
