@@ -1,18 +1,16 @@
 import React from 'react';
-import { Listing } from './models/Listing';
 
-export class Auction extends React.Component {
+export const Auction = props => <>
 
-    constructor(props) {
-        super(props);
-    }
+    <h3>Current Bid: <span class="badge bg-success">{props.itemListing.current_bid}</span></h3>
+    <p className="lead">Auction End Date: {props.itemListing.end_date}</p>
+    <div class="d-grid">
+    <button
+        type="button"
+        className="btn btn-primary btn-lg btn-block mt-4"
+        onClick={() => this.onAddClick()}>
+        Bid
+    </button>
+    </div>
 
-
-    render() {
-        return <>
-        <h3>Current Price: {this.props.current_bid}</h3>
-        <p className="lead">Time Remaining: {this.props.end_time}</p>
-        
-        </>;
-    }
-}
+</>;

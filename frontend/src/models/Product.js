@@ -4,6 +4,5 @@ export class Product {
         this.name = name;
         this.description = description;
         this.imageUrl = imageUrl;
-        this.auctionType = auctionType;
     }
 }

@@ -3,72 +3,73 @@ import { Product } from "./models/Product";
 import { Listing } from "./models/Listing";
 import { Auction } from "./Auction";
 import { Fixed } from "./Fixed";
+import { Bulk } from "./Bulk";
+import { SettingsModal } from "./SettingsModal";
 
 export class ItemListingPage extends React.Component {
   constructor() {
     super();
+
     this.item = new Product(
       1,
       "Lumber",
       "The best lumber ever from the rainforest.",
-      "https://via.placeholder.com/300",
-      "Bid"
+      "https://via.placeholder.com/300"
     );
     this.state = new Listing(
       this.item,
+      "Auction",
       1,
-      "Lumber",
-      "The best lumber ever from the rainforest.",
-      "https://via.placeholder.com/300",
-      "Bid"
+      "1-1-2021",
+      "1-3-2021",
+      7.99,
+      "",
+      "",
+      "",
+      ""
     );
   }
 
-  state = {
-    id: "",
-    name: "",
-    description: "",
-    price: "",
-    imageUrl: "",
-    auctionType: "",
-  };
-
   render() {
     let info;
-    if (this.state.auctionType == "Bid") {
-      info = <Auction></Auction>;
-    } else if (this.state.auctionType == "Buy") {
-      info = <Fixed></Fixed>;
+    if (this.state.auction_type == "Auction") {
+      info = <Auction itemListing={this.state}></Auction>;
+    } else if (this.state.auction_type == "Fixed") {
+      info = <Fixed itemListing={this.state}></Fixed>;
+    } else if (this.state.auction_type == "Bulk") {
+      info = <Bulk itemListing={this.state}></Bulk>;
     }
 
     return (
       <>
-        <button type="button" className="btn btn-secondary btn-md m-4">
-          {" "}
-          Back To Listings{" "}
+        <button
+          type="button"
+          className="btn btn-secondary btn-md m-4 float-none"
+        >
+          Back To Listings
         </button>
+
+        <button
+          type="button"
+          class="btn btn-secondary m-4 float-end"
+          data-bs-toggle="modal"
+          data-bs-target="#listingModal"
+        >
+          Edit Listing
+        </button>
+        <SettingsModal listing={this.state} />
         <div class="jumbotron container bg-light mt-5">
-          <div class="container-fluid">
-            <img
-              class="float-left img-thumbnail mr-5 mb-5"
-              src={this.state.imageUrl}
-            ></img>
-            <h1 class="display-4">{this.state.name}</h1>
+          <img class="float-start m-3" src={this.state.item.imageUrl}></img>
+          <div class="mx-auto">
+            <h1 class="display-4">{this.state.item.name}</h1>
             <h1>
               <span class="badge badge-success badge-lg">
-                {this.state.price}
+                {this.state.item.price}
               </span>
             </h1>
-            <p class="lead">{this.state.description}</p>
+            <p class="lead">{this.state.item.description}</p>
             <div>{info}</div>
-            <button
-              type="button"
-              className="btn btn-primary btn-lg btn-block mt-4"
-              onClick={() => this.onAddClick()}
-            >
-              {this.state.auctionType}
-            </button>
-            <div class="clearfix"></div>
+            <div class="float-end"></div>
           </div>
         </div>
       </>
