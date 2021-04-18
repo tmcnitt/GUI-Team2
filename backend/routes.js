@@ -201,11 +201,53 @@ module.exports = function routes(app, logger) {
 
     let mod = ""
     if (id) {
-      mod = " AND list_user_id = ?"
+      mod = " AND db.fixed_price.list_user_id = ?"
     }
 
-    // if there is no issue obtaining a connection, execute query and release connection
-    const sql = "SELECT * FROM fixed_price WHERE is_finished = 0" + mod;
+    // get the auction
+    // Convert the user id into a username for the table
+    // Convert the reviews into an average score
+    const sql = `
+        SELECT 
+          db.fixed_price.*, 
+          db.users.username as list_username,
+          AVG(db.review.stars) as avglist_user_score,
+          bought_history.buy_count as list_user_buy_count,
+          sell_history.sell_count as list_user_sell_count,
+          products.name as product_name
+        FROM 
+          db.fixed_price
+        LEFT JOIN 
+          db.users 
+        ON db.users.id = db.fixed_price.list_user_id
+        LEFT JOIN
+          db.review
+        ON db.users.id = db.review.reviewee_id
+        LEFT JOIN (
+          SELECT 
+            purchase_user_id, 
+            COUNT(*) as buy_count
+          FROM 
+            transactions 
+          GROUP BY 
+            purchase_user_id
+        ) as bought_history
+        ON db.users.id = bought_history.purchase_user_id 
+        LEFT JOIN (
+          SELECT 
+            list_user_id, 
+            COUNT(*) as sell_count
+          FROM 
+            transactions 
+          GROUP BY 
+          list_user_id
+        ) as sell_history
+        ON db.users.id = sell_history.list_user_id 
+        LEFT JOIN products 
+        ON products.id = fixed_price.product_id
+        WHERE is_finished = 0
+      ` + mod;
+
     pool.query(sql, [id], (err, rows) => {
       if (err) {
         logger.error("Error getting fixed price listings: \n", err);
@@ -341,8 +383,33 @@ module.exports = function routes(app, logger) {
 
   app.get('/transactions', (req, res) => {
     jwt.verifyToken(req).then((user) => {
-      const sql = "SELECT * FROM transactions WHERE purchase_user_id = ?";
-      pool.query(sql, [user.id], (err, results) => {
+      //get the transcation and see if there is a mutal review 
+      const sql = `
+        SELECT 
+          transactions.*,
+          purchaser_reviews.stars as purchaser_reviews_stars,
+          lister_reviews.stars as lister_reviews_stars,
+          purchase_user_id = ? as is_purchaser,
+          products.name as product_name
+        FROM 
+          transactions 
+        LEFT JOIN
+          db.review as purchaser_reviews
+        ON
+            transactions.list_user_id = purchaser_reviews.reviewee_id AND
+            transactions.purchase_user_id = purchaser_reviews.reviewer_id
+        LEFT JOIN
+          db.review as lister_reviews
+        ON
+            transactions.purchase_user_id = lister_reviews.reviewee_id AND
+            transactions.list_user_id = lister_reviews.reviewer_id
+        LEFT JOIN
+          products
+        ON products.id = transactions.product_id  
+        WHERE 
+          purchase_user_id = ? OR list_user_id = ?
+        `;
+      pool.query(sql, [user.id, user.id, user.id], (err, results) => {
         if (err) {
           logger.error("Error getting your transactions: \n", err);
           res
@@ -402,7 +469,9 @@ module.exports = function routes(app, logger) {
           res.status(200).send({ success: true, msg: "Got User Reviews", data: rows })
         }
       })
-    });
+    }).catch(() => {
+      res.status(400).end();
+    });;
   });
 
   app.post('/auctions', async (req, res) => {
@@ -430,7 +499,9 @@ module.exports = function routes(app, logger) {
             .send({ success: true, msg: "Auction successfully created" });
         }
       });
-    });
+    }).catch(() => {
+      res.status(400).end();
+    });;
   })
 
 
@@ -440,9 +511,55 @@ module.exports = function routes(app, logger) {
     const id = req.param('id')
     let mod = ""
     if (id) {
-      mod = " AND list_user_id = ?"
+      mod = " AND db.auction.list_user_id = ?"
     }
-    const sql = "SELECT * FROM auction WHERE is_finished = false AND now() > start_date AND now() < end_date" + mod;
+
+    // get the auction
+    // Convert the user id into a username for the table
+    // Convert the reviews into an average score
+    const sql = `
+      SELECT 
+        db.auction.*,
+        db.users.username as list_username,
+        AVG(db.review.stars) as avglist_user_score,
+        bought_history.buy_count as list_user_buy_count,
+        sell_history.sell_count as list_user_sell_count,
+        products.name as product_name
+      FROM 
+        db.auction 
+      LEFT JOIN 
+        db.users 
+      ON db.users.id = db.auction.list_user_id
+      LEFT JOIN
+        db.review
+      ON db.users.id = db.review.reviewee_id
+      LEFT JOIN (
+        SELECT 
+          purchase_user_id, 
+          COUNT(*) as buy_count
+        FROM 
+          transactions 
+        GROUP BY 
+          purchase_user_id
+      ) as bought_history
+      ON db.users.id = bought_history.purchase_user_id 
+      LEFT JOIN (
+        SELECT 
+          list_user_id, 
+          COUNT(*) as sell_count
+        FROM 
+          transactions 
+        GROUP BY 
+        list_user_id
+      ) as sell_history
+      ON db.users.id = sell_history.list_user_id
+      LEFT JOIN products 
+      ON products.id = auction.product_id
+      WHERE 
+        is_finished = false AND 
+        now() > start_date AND 
+        now() < end_date` + mod;
+
     pool.query(sql, [id], (err, rows) => {
       if (err) {
         logger.error("Error retrieving auctions: \n", err);
@@ -473,7 +590,9 @@ module.exports = function routes(app, logger) {
           res.status(200).send({ success: true, msg: "Deleted auction", });
         }
       });
-    });
+    }).catch(() => {
+      res.status(400).end();
+    });;
   });
 
   //PUT /auction/:id -> upacte action, options: descpription,end_date
@@ -510,7 +629,9 @@ module.exports = function routes(app, logger) {
           })
         }
       });
-    });
+    }).catch(() => {
+      res.status(400).end();
+    });;
   });
 
 
@@ -547,34 +668,14 @@ module.exports = function routes(app, logger) {
           });
         }
       });
-    })
-  });
-
-
-  // GET /notifications
-  app.get("/notifications", (req, res) => {
-    jwt.verifyToken(req).then((user) => {
-      const userid = user.id;
-
-      // get all notifications
-      const sql = "SELECT * FROM notification WHERE user_id = ?"
-      pool.query(sql, [userid], (err, rows) => {
-        if (err) {
-          logger.error("Error retrieving notifications: \n", err);
-          res.status(400).send({
-            success: false,
-            msg: "Error retrieving notifications"
-          })
-        } else {
-          res.status(200).send({ success: true, data: rows });
-        }
-      });
+    }).catch(() => {
+      res.status(400).end();
     });
   });
 
 
   // GET /notifications/new
-  app.get("/notifications/new", (req, res) => {
+  app.get("/notifications/", (req, res) => {
     // if there is no issue obtaining a connection, execute query and release connection
     jwt.verifyToken(req).then((user) => {
       const userid = user.id;
@@ -592,11 +693,13 @@ module.exports = function routes(app, logger) {
           res.status(200).send({ success: true, data: rows });
         }
       });
-    });
+    }).catch(() => {
+      res.status(400).end();
+    });;
   });
 
   // PUT /notifications/new
-  app.put("/notifications/new", (req, res) => {
+  app.put("/notifications/", (req, res) => {
     jwt.verifyToken(req).then((user) => {
       const userid = user.id;
       // if there is no issue obtaining a connection, execute query and release connection
@@ -610,10 +713,12 @@ module.exports = function routes(app, logger) {
             msg: "Error updating notifications"
           })
         } else {
-          res.status(200).send({ success: true, data: rows });
+          res.status(200).send({ success: true });
         }
       })
-    })
+    }).catch(() => {
+      res.status(400).end();
+    });
   })
 }
 
@@ -630,7 +735,9 @@ function createAuctionNotification(req, res, list_user_id, text) {
             .send({ success: false, msg: "Error creating notification" });
         }
       })
-    })
+    }).catch(() => {
+      res.status(400).end();
+    });
   })
 }
 
@@ -652,7 +759,9 @@ function createTransaction(req, res, purchase_type, purchase_quantity, auction) 
             .send({ success: true, msg: "Transaction and notification created", price: price })
         }
       })
-  })
+  }).catch(() => {
+    res.status(400).end();
+  });
 }
 
 function getListingPrice(base_price, discount_price, discount_end, quantity) {
