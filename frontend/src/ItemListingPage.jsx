@@ -3,11 +3,15 @@ import { Product } from './models/Product';
 import { Listing } from './models/Listing';
 import { Auction } from './Auction';
 import { Fixed } from './Fixed';
+import { Bulk } from './Bulk';
+import { SettingsModal } from './SettingsModal';
+
 
 
 export class ItemListingPage extends React.Component {
     constructor() {
         super();
+
         this.item = new Product(
             1,
             "Lumber",
@@ -31,37 +35,42 @@ export class ItemListingPage extends React.Component {
 
 
 
+
     render() {
         let info;
-        if(this.state.auction_type == "Auction") {
-            info = <Auction></Auction>
+        if (this.state.auction_type == "Auction") {
+            info = <Auction itemListing={this.state} ></Auction>
         }
-        else if(this.state.auction_type == "Buy") {
-            info = <Fixed></Fixed>
+        else if (this.state.auction_type == "Fixed") {
+            info = <Fixed itemListing={this.state} ></Fixed>
+        }
+        else if (this.state.auction_type == "Bulk") {
+            info = <Bulk itemListing={this.state} ></Bulk>
         }
 
         return <>
-        <button type="button" className="btn btn-secondary btn-md m-4"> Back To Listings </button>
+            <button type="button"
+                className="btn btn-secondary btn-md m-4 float-none" >
+                Back To Listings
+            </button>
+
+            <button type="button" class="btn btn-secondary m-4 float-end" data-bs-toggle="modal" data-bs-target="#listingModal">
+                Edit Listing
+            </button>
+            <SettingsModal listing={this.state} />
             <div class="jumbotron container bg-light mt-5">
-                <div class="container-fluid">
-                    <img class="float-left img-thumbnail mr-5 mb-5" src={this.state.item.imageUrl}></img>
+                <img class="float-start m-3" src={this.state.item.imageUrl}></img>
+                <div class="mx-auto">
                     <h1 class="display-4">{this.state.item.name}</h1>
                     <h1><span class="badge badge-success badge-lg">{this.state.item.price}</span></h1>
                     <p class="lead">{this.state.item.description}</p>
                     <div>{info}</div>
-                    <button
-                        type="button"
-                        className="btn btn-primary btn-lg btn-block mt-4"
-                        onClick={() => this.onAddClick()}>
-                        {this.state.auction_type}
-                    </button>
-                    <div class="clearfix"></div>
+                    <div class="float-end"></div>
                 </div>
             </div>
-            
-
-
 
         </>;
     }
+
+
 }
