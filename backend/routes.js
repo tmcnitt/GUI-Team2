@@ -356,7 +356,7 @@ module.exports = function routes(app, logger) {
                 .status(400)
                 .send({ success: false, msg: "Error updating auction information" });
             } else {
-              createTransaction(req, res, 2, purchase_quantity, auction);
+              createTransaction(req, res, 2, purchase_quantity, auction, "Some of your fixed auction has been sold.");
             }
           });
         } else if (purchase_quantity == auction[0].quantity) {
@@ -369,7 +369,7 @@ module.exports = function routes(app, logger) {
                 .send({ success: false, msg: "Error updating auction information" });
             } else {
               const transactionID = req.body.id;
-              createTransaction(req, res, 2, purchase_quantity, auction);
+              createTransaction(req, res, 2, purchase_quantity, auction, "Your fixed price auction has ended");
             }
           });
         } else {
@@ -448,7 +448,7 @@ module.exports = function routes(app, logger) {
         }
         else {
           sql = "INSERT INTO notification (user_id, has_seen, date, text) VALUES (?, 0, now(), ?)";
-          pool.query(sql, [user.id, "You have a new review!"], (error, results) => {
+          pool.query(sql, [req.body.reviewee, "You have a new review!"], (error, results) => {
             if (err) {
               logger.error("Error adding notification: \n", err);
               res.status(400).send({ success: false, msg: "Error adding notification" });
@@ -750,7 +750,7 @@ function createAuctionNotification(req, res, list_user_id, text) {
   })
 }
 
-function createTransaction(req, res, purchase_type, purchase_quantity, auction) {
+function createTransaction(req, res, purchase_type, purchase_quantity, auction, msg) {
   jwt.verifyToken(req).then((user) => {
     const price = getListingPrice(auction[0].base_price, auction[0].discount_price, auction[0].discount_end, purchase_quantity)
     const createTransaction = "INSERT INTO transactions ( list_user_id, purchase_user_id, listing_type, quantity, price, product_id, date) VALUES(?, ?, ?, ?, ?, ?, NOW())";
@@ -762,7 +762,7 @@ function createTransaction(req, res, purchase_type, purchase_quantity, auction) 
             .status(400)
             .send({ success: false, msg: "Error creating transaction" });
         } else {
-          createAuctionNotification(req, res, auction[0].list_user_id, "Your fixed price auction has ended");
+          createAuctionNotification(req, res, auction[0].list_user_id, msg);
           res
             .status(200)
             .send({ success: true, msg: "Transaction and notification created", price: price })
