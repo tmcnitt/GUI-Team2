@@ -13,11 +13,18 @@ export const Auction = (props) => {
     return () => clearTimeout(timer);
   });
 
+  let username = null;
+  if (props.listing.bid_username) {
+    username = <>by {props.listing.bid_username}</>;
+  }
+
   return (
     <>
       <h3>
         Current Bid:{" "}
-        <span class="badge bg-success">${props.listing.current_bid}</span>
+        <span class="badge bg-success">
+          ${props.listing.current_bid} {username}
+        </span>
       </h3>
       <p className="lead">Time Remaining: {remain}</p>
       <div class="d-grid">

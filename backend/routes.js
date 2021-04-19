@@ -538,7 +538,8 @@ module.exports = function routes(app, logger) {
         AVG(db.review.stars) as avglist_user_score,
         bought_history.buy_count as list_user_buy_count,
         sell_history.sell_count as list_user_sell_count,
-        products.name as product_name
+        products.name as product_name,
+        IF(auction.show_user_bid, bid_user.username , "") as bid_username
       FROM 
         db.auction 
       LEFT JOIN 
@@ -569,6 +570,8 @@ module.exports = function routes(app, logger) {
       ON db.users.id = sell_history.list_user_id
       LEFT JOIN products 
       ON products.id = auction.product_id
+      LEFT JOIN users as bid_user
+      ON users.id = auction.bid_user_id
       WHERE 
         is_finished = false AND 
         now() > start_date AND 
