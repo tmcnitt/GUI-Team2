@@ -197,77 +197,82 @@ module.exports = function routes(app, logger) {
   // GET /fixed (get all current fixed options)
   //GET -> /fixed/:id -> get all running fixed listed by user with id
   app.get('/fixed/:id?', (req, res) => {
-    const id = req.param('id')
+    jwt.verifyToken(req).then(() => {
 
-    let mod = ""
-    if (id) {
-      mod = " AND db.fixed_price.list_user_id = ?"
-    }
+      const id = req.param('id')
 
-    // get the auction
-    // Convert the user id into a username for the table
-    // Convert the reviews into an average score
-    const sql = `
-        SELECT 
-          db.fixed_price.*, 
-          IF(
-            discount_end IS NOT NULL and now() < discount_end, 
-            discount_price, 
-            base_price
-          ) as price,
-          db.users.username as list_username,
-          AVG(db.review.stars) as avglist_user_score,
-          bought_history.buy_count as list_user_buy_count,
-          sell_history.sell_count as list_user_sell_count,
-          products.name as product_name
-        FROM 
-          db.fixed_price
-        LEFT JOIN 
-          db.users 
-        ON db.users.id = db.fixed_price.list_user_id
-        LEFT JOIN
-          db.review
-        ON db.users.id = db.review.reviewee_id
-        LEFT JOIN (
-          SELECT 
-            purchase_user_id, 
-            COUNT(*) as buy_count
-          FROM 
-            transactions 
-          GROUP BY 
-            purchase_user_id
-        ) as bought_history
-        ON db.users.id = bought_history.purchase_user_id 
-        LEFT JOIN (
-          SELECT 
-            list_user_id, 
-            COUNT(*) as sell_count
-          FROM 
-            transactions 
-          GROUP BY 
-          list_user_id
-        ) as sell_history
-        ON db.users.id = sell_history.list_user_id 
-        LEFT JOIN products 
-        ON products.id = fixed_price.product_id
-        WHERE is_finished = 0
-      ` + mod + " GROUP BY db.fixed_price.id HAVING product_name IS NOT NULL";
-
-    pool.query(sql, [id], (err, rows) => {
-      if (err) {
-        logger.error("Error getting fixed price listings: \n", err);
-        res
-          .status(400)
-          .send({ success: false, msg: "Error getting fixed price listings" });
-      } else {
-        rows.forEach((row) => {
-          row.price_for_quantity = getListingPrice(row.base_price, row.discount_price, row.discount_end, row.quantity);
-          row.single_price = getListingPrice(row.base_price, row.discount_price, row.discount_end, 1);
-        })
-        res
-          .status(200)
-          .send({ success: true, data: rows })
+      let mod = ""
+      if (id) {
+        mod = " AND db.fixed_price.list_user_id = ?"
       }
+
+      // get the auction
+      // Convert the user id into a username for the table
+      // Convert the reviews into an average score
+      const sql = `
+          SELECT 
+            db.fixed_price.*, 
+            IF(
+              discount_end IS NOT NULL and now() < discount_end, 
+              discount_price, 
+              base_price
+            ) as price,
+            db.users.username as list_username,
+            AVG(db.review.stars) as avglist_user_score,
+            bought_history.buy_count as list_user_buy_count,
+            sell_history.sell_count as list_user_sell_count,
+            products.name as product_name
+          FROM 
+            db.fixed_price
+          LEFT JOIN 
+            db.users 
+          ON db.users.id = db.fixed_price.list_user_id
+          LEFT JOIN
+            db.review
+          ON db.users.id = db.review.reviewee_id
+          LEFT JOIN (
+            SELECT 
+              purchase_user_id, 
+              COUNT(*) as buy_count
+            FROM 
+              transactions 
+            GROUP BY 
+              purchase_user_id
+          ) as bought_history
+          ON db.users.id = bought_history.purchase_user_id 
+          LEFT JOIN (
+            SELECT 
+              list_user_id, 
+              COUNT(*) as sell_count
+            FROM 
+              transactions 
+            GROUP BY 
+            list_user_id
+          ) as sell_history
+          ON db.users.id = sell_history.list_user_id 
+          LEFT JOIN products 
+          ON products.id = fixed_price.product_id
+          WHERE is_finished = 0
+        ` + mod + " GROUP BY db.fixed_price.id HAVING product_name IS NOT NULL";
+
+      pool.query(sql, [id], (err, rows) => {
+        if (err) {
+          logger.error("Error getting fixed price listings: \n", err);
+          res
+            .status(400)
+            .send({ success: false, msg: "Error getting fixed price listings" });
+        } else {
+          rows.forEach((row) => {
+            row.price_for_quantity = getListingPrice(row.base_price, row.discount_price, row.discount_end, row.quantity);
+            row.single_price = getListingPrice(row.base_price, row.discount_price, row.discount_end, 1);
+          })
+          res
+            .status(200)
+            .send({ success: true, data: rows })
+        }
+      })
+    }).catch(() => {
+      res.status(400).end();
     })
   })
 
@@ -522,16 +527,18 @@ module.exports = function routes(app, logger) {
   //GET -> /auctions -> get all running auctions
   //GET -> /auctions/:id -> get all running auctions listed by user with id
   app.get('/auctions/:id?', function (req, res) {
-    const id = req.param('id')
-    let mod = ""
-    if (id) {
-      mod = " AND db.auction.list_user_id = ?"
-    }
+    jwt.verifyToken(req).then(() => {
 
-    // get the auction
-    // Convert the user id into a username for the table
-    // Convert the reviews into an average score
-    const sql = `
+      const id = req.param('id')
+      let mod = ""
+      if (id) {
+        mod = " AND db.auction.list_user_id = ?"
+      }
+
+      // get the auction
+      // Convert the user id into a username for the table
+      // Convert the reviews into an average score
+      const sql = `
       SELECT 
         db.auction.*,
         db.users.username as list_username,
@@ -577,17 +584,20 @@ module.exports = function routes(app, logger) {
         now() > start_date AND 
         now() < end_date` + mod + "  GROUP BY db.auction.id HAVING product_name IS NOT NULL";
 
-    pool.query(sql, [id], (err, rows) => {
-      if (err) {
-        logger.error("Error retrieving auctions: \n", err);
-        res.status(400).send({
-          success: false,
-          msg: "Error retrieving auctions",
-        });
-      } else {
-        res.status(200).send({ success: true, data: rows });
-      }
-    })
+      pool.query(sql, [id], (err, rows) => {
+        if (err) {
+          logger.error("Error retrieving auctions: \n", err);
+          res.status(400).send({
+            success: false,
+            msg: "Error retrieving auctions",
+          });
+        } else {
+          res.status(200).send({ success: true, data: rows });
+        }
+      })
+    }).catch(() => {
+      res.status(400).end();
+    });
   });
 
   //DELETE -> /auctions/:id -> stop auction

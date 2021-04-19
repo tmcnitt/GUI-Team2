@@ -56,12 +56,9 @@ export function App() {
             <Route path="/login">
               <Users />
             </Route>
-            <Route path="/listings">
+            <PrivateRoute path="/listings">
               <ListingPage />
-            </Route>
-            <Route path="/listing">
-              <ItemListingPage />
-            </Route>
+            </PrivateRoute>
             <Route path="/transactions">
               <TransactionPage />
             </Route>

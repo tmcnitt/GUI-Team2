@@ -3,7 +3,7 @@ import React, { useState, useRef, useEffect, useContext, } from "react";
 import './AuctionList.css'
 import axios from "axios";
 import { AppContext } from "./AppContext.js";
-import { capitalize, relativeTime } from './utils'
+import { capitalize, relativeTime, axiosJWTHeader } from './utils'
 
 
 function AuctionItem(props) {
@@ -56,7 +56,7 @@ export function AuctionList({ selling, setListing }) {
   let [items, setItems] = useState([]);
 
 
-  const { baseURL, user } = useContext(AppContext);
+  const { baseURL, user, JWT } = useContext(AppContext);
 
   let filter = false
 
@@ -95,8 +95,8 @@ export function AuctionList({ selling, setListing }) {
       mod = "/" + user.id
     }
     axios.all([
-      axios.get(baseURL + "/auctions" + mod),
-      axios.get(baseURL + "/fixed" + mod)
+      axios.get(baseURL + "/auctions" + mod, { headers: axiosJWTHeader(JWT) }),
+      axios.get(baseURL + "/fixed" + mod, { headers: axiosJWTHeader(JWT) })
     ]).then(axios.spread((auctions, fixed) => {
       setItems(formatAuctions(auctions).concat(formatFixed(fixed)))
       window.$(table.current).DataTable({
