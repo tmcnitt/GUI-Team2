@@ -4,6 +4,7 @@ import { Users } from "./Users.js";
 import { ItemListingPage } from "./ItemListingPage";
 import { UserDashboard } from './UserDashboard'
 import { ListingPage } from './ListingPage'
+import { TransactionPage } from './TransactionPage'
 
 import { AppContext, useProvideAppContext, setupLogin } from "./AppContext.js";
 import {
@@ -44,6 +45,9 @@ export function App() {
                   <li class="nav-item">
                     <Link className="nav-link" to="/listings">Listings</Link>
                   </li>
+                  <li class="nav-item">
+                    <Link className="nav-link" to="/transactions">Transactions</Link>
+                  </li>
                 </ul>
               </div>
             </div>
@@ -57,6 +61,9 @@ export function App() {
             </Route>
             <Route path="/listing">
               <ItemListingPage />
+            </Route>
+            <Route path="/transactions">
+              <TransactionPage />
             </Route>
             <PrivateRoute path="/" exact={true}>
               <UserDashboard />

@@ -57,11 +57,6 @@ export function UserDashboard() {
             <div className="row mt-5">
                 <ListingPage selling={true} />
             </div>
-            <div className="row mt-5">
-                <h3>Your Recent Transcations</h3>
-                <TransactionList />
-            </div>
-
         </div>
     )
 }
