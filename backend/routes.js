@@ -260,7 +260,6 @@ module.exports = function routes(app, logger) {
           .status(400)
           .send({ success: false, msg: "Error getting fixed price listings" });
       } else {
-        console.log(rows)
         rows.forEach((row) => {
           row.price_for_quantity = getListingPrice(row.base_price, row.discount_price, row.discount_end, row.quantity);
           row.single_price = getListingPrice(row.base_price, row.discount_price, row.discount_end, 1);
