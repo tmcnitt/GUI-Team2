@@ -60,3 +60,20 @@ export function dateToISOLikeButLocal(date) {
     const isoLocal = iso.slice(0, 19);
     return isoLocal;
 }
+
+export const timeLeft = (end) => {
+    var delta = Math.abs(new Date(end) - new Date()) / 1000;
+
+    var days = Math.floor(delta / 86400);
+    delta -= days * 86400;
+
+    var hours = Math.floor(delta / 3600) % 24;
+    delta -= hours * 3600;
+
+    var minutes = Math.floor(delta / 60) % 60;
+    delta -= minutes * 60;
+
+    var seconds = (delta % 60).toFixed(0);
+
+    return `${days} Days ${hours}:${minutes}:${seconds}`
+}

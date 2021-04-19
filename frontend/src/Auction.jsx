@@ -1,16 +1,34 @@
-import React from 'react';
+import React, { useEffect, useState } from "react";
+import { timeLeft } from "./utils";
 
-export const Auction = props => <>
+export const Auction = (props) => {
+  let [remain, setRemain] = useState(null);
 
-    <h3>Current Bid: <span class="badge bg-success">{props.itemListing.current_bid}</span></h3>
-    <p className="lead">Auction End Date: {props.itemListing.end_date}</p>
-    <div class="d-grid">
-    <button
-        type="button"
-        className="btn btn-primary btn-lg btn-block mt-4"
-        onClick={() => this.onAddClick()}>
-        Bid
-    </button>
-    </div>
+  useEffect(() => {
+    setRemain(timeLeft(props.listing.end_date));
+    const timer = setTimeout(() => {
+      setRemain(timeLeft(props.listing.end_date));
+    }, 1000);
 
-</>;
+    return () => clearTimeout(timer);
+  });
+
+  return (
+    <>
+      <h3>
+        Current Bid:{" "}
+        <span class="badge bg-success">${props.listing.current_bid}</span>
+      </h3>
+      <p className="lead">Time Remaining: {remain}</p>
+      <div class="d-grid">
+        <button
+          type="button"
+          className="btn btn-primary btn-lg btn-block mt-4"
+          onClick={() => this.onAddClick()}
+        >
+          Bid
+        </button>
+      </div>
+    </>
+  );
+};

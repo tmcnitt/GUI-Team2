@@ -210,6 +210,11 @@ module.exports = function routes(app, logger) {
     const sql = `
         SELECT 
           db.fixed_price.*, 
+          IF(
+            discount_end IS NOT NULL and now() < discount_end, 
+            discount_price, 
+            base_price
+          ) as price,
           db.users.username as list_username,
           AVG(db.review.stars) as avglist_user_score,
           bought_history.buy_count as list_user_buy_count,
@@ -245,8 +250,8 @@ module.exports = function routes(app, logger) {
         ON db.users.id = sell_history.list_user_id 
         LEFT JOIN products 
         ON products.id = fixed_price.product_id
-        WHERE is_finished = 0 AND fixed_price.list_user_id = 16
-      ` + mod + " HAVING product_name IS NOT NULL";
+        WHERE is_finished = 0
+      ` + mod + " GROUP BY db.fixed_price.id HAVING product_name IS NOT NULL";
 
     pool.query(sql, [id], (err, rows) => {
       if (err) {
@@ -255,6 +260,7 @@ module.exports = function routes(app, logger) {
           .status(400)
           .send({ success: false, msg: "Error getting fixed price listings" });
       } else {
+        console.log(rows)
         rows.forEach((row) => {
           row.price_for_quantity = getListingPrice(row.base_price, row.discount_price, row.discount_end, row.quantity);
           row.single_price = getListingPrice(row.base_price, row.discount_price, row.discount_end, 1);
@@ -567,7 +573,7 @@ module.exports = function routes(app, logger) {
       WHERE 
         is_finished = false AND 
         now() > start_date AND 
-        now() < end_date` + mod + " HAVING product_name IS NOT NULL";
+        now() < end_date` + mod + "  GROUP BY db.auction.id HAVING product_name IS NOT NULL";
 
     pool.query(sql, [id], (err, rows) => {
       if (err) {

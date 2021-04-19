@@ -44,7 +44,7 @@ export function App() {
             <Route path="/listing">
               <ItemListingPage />
             </Route>
-            <PrivateRoute path="/">
+            <PrivateRoute path="/" exact={true}>
               <UserDashboard />
             </PrivateRoute>
 

@@ -32,7 +32,7 @@ function AuctionItem(props) {
   }
 
   return (
-    <tr className="itemRow">
+    <tr className="itemRow" onClick={() => props.setListing(props.listing)}>
       <th scope="row">{capitalize(props.listing.product_name)}</th>
       <td>{props.listing.auction_type}</td>
       <td>${price}</td>
@@ -46,7 +46,7 @@ function AuctionItem(props) {
 }
 
 
-export function AuctionList({ selling }) {
+export function AuctionList({ selling, setListing }) {
   let [items, setItems] = useState([]);
 
 
@@ -67,7 +67,7 @@ export function AuctionList({ selling }) {
       r.data.data.forEach(auction => {
         auction.auction_type = "Auction"
         items.push(
-          <AuctionItem key={auction.id} listing={auction} redraw={redraw} />
+          <AuctionItem key={auction.id} listing={auction} setListing={setListing} redraw={redraw} />
         )
       })
       return items
@@ -78,7 +78,7 @@ export function AuctionList({ selling }) {
       r.data.data.forEach(auction => {
         auction.auction_type = "Fixed"
         items.push(
-          <AuctionItem key={auction.id} listing={auction} redraw={redraw} />
+          <AuctionItem key={auction.id} listing={auction} setListing={setListing} redraw={redraw} />
         )
       })
       return items
