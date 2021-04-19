@@ -124,30 +124,73 @@ export function AuctionList({ selling, setListing }) {
       })
     }))
 
+    window.$.fn.dataTable.ext.search.push(
+      function (settings, data, dataIndex) {
+        if (settings.nTable.id != "listings") {
+          return true;
+        }
+
+        var min = window.$('#min').val();
+        var max = window.$('#max').val();
+        var date = parseInt(data[2].slice(1));
+
+        if (!min || !max) {
+          return true
+        }
+
+        if (date < min) {
+          return false
+        }
+        if (date > max) {
+          return false
+        }
+        return true
+      }
+    );
+
   }, [])
 
   const table = useRef();
 
   return (
-    <div className="p-2 mt-5">
-      <table className="table table-striped" ref={table}>
-        <thead className="thead-dark">
-          <tr>
-            <th scope="col">Item Name</th>
-            <th scope="col">Listing Type</th>
-            <th scope="col">Price</th>
-            <th scope="col">Quantity</th>
-            <th scope="col">Ends</th>
-            <th scope="col">Seller</th>
-            <th scope="col">Seller Reviews</th>
-            <th scope="col">Hidden</th>
-            <th scope="col">Compare</th>
-          </tr>
-        </thead>
-        <tbody>
-          {items}
-        </tbody>
-      </table>
-    </div>
+    <>
+      <div className="col-4">
+        <form className="row g-3">
+          <div className="col-md-4">
+            <label htmlFor="min" className="form-label">Low Price</label>
+            <input type="number" className="form-control" id="min" />
+          </div>
+          <div className="col-md-4">
+            <label htmlFor="max" className="form-label">High Price</label>
+            <input type="number" className="form-control" id="max" />
+          </div>
+          <div className="col-md-3">
+            <label htmlFor="end" className="form-label text-white">_</label>
+            <button type="button" className="form-control btn btn-primary" onClick={() => redraw()}>Filter</button>
+          </div>
+        </form>
+      </div>
+
+      <div className="p-2 ">
+        <table className="table table-striped" ref={table} id="listings">
+          <thead className="thead-dark">
+            <tr>
+              <th scope="col">Item Name</th>
+              <th scope="col">Listing Type</th>
+              <th scope="col">Price</th>
+              <th scope="col">Quantity</th>
+              <th scope="col">Ends</th>
+              <th scope="col">Seller</th>
+              <th scope="col">Seller Reviews</th>
+              <th scope="col">Hidden</th>
+              <th scope="col">Compare</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items}
+          </tbody>
+        </table>
+      </div>
+    </>
   )
 }
