@@ -26,9 +26,14 @@ function AuctionItem(props) {
     price = props.listing.single_price + " Each"
   }
 
-  let compareBtn = <button type="button" className="form-control btn btn-primary" onClick={() => setCompare("1")}>Add to Compare</button>
+  const handleClick = (e, val) => {
+    e.stopPropagation();
+    setCompare(val)
+  }
+
+  let compareBtn = <button type="button" className="form-control btn btn-primary" onClick={(e) => handleClick(e, "1")}>Add to Compare</button>
   if (compare == "1") {
-    compareBtn = <button type="button" className="form-control btn btn-primary" onClick={() => setCompare("0")}>Remove from Compare</button>
+    compareBtn = <button type="button" className="form-control btn btn-primary" onClick={(e) => handleClick(e, "0")}>Remove from Compare</button>
   }
 
   return (
@@ -38,6 +43,7 @@ function AuctionItem(props) {
       <td>${price}</td>
       <td>{quantity}</td>
       <td>{props.listing.end_date ? relativeTime(props.listing.end_date) : "-"}</td>
+      <td>{props.listing.list_username}</td>
       <td>{reviews}</td>
       <td>{compare.toString()}</td>
       <td>{compareBtn}</td>
@@ -97,7 +103,7 @@ export function AuctionList({ selling, setListing }) {
         dom: 'Bfrtip',
         columnDefs: [
           {
-            "targets": [6],
+            "targets": [7],
             "visible": false,
             "searchable": true,
           }
@@ -108,9 +114,9 @@ export function AuctionList({ selling, setListing }) {
             action: function (e, dt, node, config) {
               filter = !filter
               if (filter) {
-                dt.column(6).search("1").draw()
+                dt.column(7).search("1").draw()
               } else {
-                dt.column(6).search("").draw()
+                dt.column(7).search("").draw()
               }
             }
           }
@@ -132,6 +138,7 @@ export function AuctionList({ selling, setListing }) {
             <th scope="col">Price</th>
             <th scope="col">Quantity</th>
             <th scope="col">Ends</th>
+            <th scope="col">Seller</th>
             <th scope="col">Seller Reviews</th>
             <th scope="col">Hidden</th>
             <th scope="col">Compare</th>

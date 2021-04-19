@@ -4,6 +4,7 @@ import axios from "axios";
 import { axiosJWTHeader } from './utils'
 import { AuctionList } from "./AuctionList.js";
 import { TransactionList } from "./TransactionList"
+import { ListingPage } from "./ListingPage.js";
 
 export function UserDashboard() {
     const { user, baseURL, JWT } = useContext(AppContext);
@@ -19,6 +20,7 @@ export function UserDashboard() {
     }, [])
 
     let notifItems = [];
+    let notif = null;
     if (notifications && notifications.length) {
         notifications.forEach((notif) => {
             notifItems.push(
@@ -27,7 +29,16 @@ export function UserDashboard() {
                 </div>
             )
         })
+
+        notif = (
+            <div className="row mt-5">
+                <h3>Notifications - <button className="btn btn-primary" onClick={() => read()}>Mark as read</button></h3>
+                {notifItems}
+            </div>
+
+        )
     }
+
 
     const read = () => {
         axios.put(baseURL + "/notifications", {}, {
@@ -42,13 +53,9 @@ export function UserDashboard() {
             <div className="row">
                 <h1>Hello, {user.username} </h1>
             </div>
+            {notif}
             <div className="row mt-5">
-                <h3>Notifications - <button className="btn btn-primary" onClick={() => read()}>Mark as read</button></h3>
-                {notifItems}
-            </div>
-            <div className="row mt-5">
-                <h3>Your Listings</h3>
-                <AuctionList selling={true} />
+                <ListingPage selling={true} />
             </div>
             <div className="row mt-5">
                 <h3>Your Recent Transcations</h3>

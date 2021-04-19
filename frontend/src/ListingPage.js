@@ -6,7 +6,7 @@ import { AuctionList } from './AuctionList'
 import { ItemListingPage } from "./ItemListingPage";
 
 
-export function ListingPage() {
+export function ListingPage({ selling }) {
     let [show, setShow] = useState(false)
     let [listing, setListing] = useState(null)
 
@@ -25,7 +25,7 @@ export function ListingPage() {
                 </button>
             </div>
             <CreateListingModal show={show} setShow={setShow} />
-            <AuctionList setListing={setListing} />
+            <AuctionList setListing={setListing} selling={selling} />
         </div>
     )
 }

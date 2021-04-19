@@ -30,10 +30,24 @@ export function App() {
 
   return (
     <AppContext.Provider value={context}>
-      <div className="App">
-        <header className="App-header"></header>
+      <div className="container">
 
         <Router>
+          <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+            <div class="container-fluid">
+              <a class="navbar-brand" href="#">Navbar</a>
+              <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                  <li class="nav-item">
+                    <Link className="nav-link" to="/">Dashboard</Link>
+                  </li>
+                  <li class="nav-item">
+                    <Link className="nav-link" to="/listings">Listings</Link>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </nav>
           <Switch>
             <Route path="/login">
               <Users />
