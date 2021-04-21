@@ -615,6 +615,27 @@ module.exports = function routes(app, logger) {
       })
     })
   })
+
+  // GET /userlistings/{userid}
+  app.get("/userlistings/", (req, res) => {
+    jwt.verifyToken(req).then((user) => {
+      const userid = user.id;
+      // if there is no issue obtaining a connection, execute query and release connection
+      // return all listings for a user
+      const sql = "SELECT *, 'auction' as type FROM auction WHERE list_user_id = ? UNION SELECT *, 'fixed_price' as type FROM fixed_price WHERE list_user_id = ?";
+      pool.query(sql, [userid,userid], (err, rows) => {
+        if (err) {
+          logger.error("Error getting user listings: \n", err);
+          res.status(400).send({
+            success: false,
+            msg: "Error getting user listings"
+          })
+        } else {
+          res.status(200).send({ success: true, data: rows });
+        }
+      })
+    })
+  })
 }
 
 function createAuctionNotification(req, res, list_user_id, text) {
