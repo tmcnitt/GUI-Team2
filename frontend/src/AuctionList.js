@@ -84,7 +84,7 @@ export function AuctionList({ selling, setListing }) {
       r.data.data.forEach(auction => {
         auction.auction_type = "Auction"
         items.push(
-          <AuctionItem key={auction.id} listing={auction} setListing={setListing} redraw={redraw} />
+          <AuctionItem key={auction.id + auction.auction_type} listing={auction} setListing={setListing} redraw={redraw} />
         )
       })
       return items
@@ -95,7 +95,7 @@ export function AuctionList({ selling, setListing }) {
       r.data.data.forEach(auction => {
         auction.auction_type = "Fixed"
         items.push(
-          <AuctionItem key={auction.id} listing={auction} setListing={setListing} redraw={redraw} />
+          <AuctionItem key={auction.id + auction.auction_type} listing={auction} setListing={setListing} redraw={redraw} />
         )
       })
       return items
