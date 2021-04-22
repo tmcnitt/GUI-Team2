@@ -1,28 +1,77 @@
-import React from "react";
-import { FixedForm } from "./FixedForm";
-import { AuctionForm } from "./AuctionForm";
+import React, { useState } from "react";
+import { FixedSettingsForm } from "./FixedSettingsForm";
+import { AuctionSettingsForm } from "./AuctionSettingsForm";
+import { ConfirmStopModal } from "./ConfirmStopModal";
+import { dateToISOLikeButLocal } from "./utils";
 
 export const SettingsModal = (props) => {
+  const defaultValues = {
+    description: props.listing.description,
+    start_date: props.listing.start_date
+      ? dateToISOLikeButLocal(new Date(props.listing.start_date))
+      : "",
+    end_date: props.listing.end_date
+      ? dateToISOLikeButLocal(new Date(props.listing.end_date))
+      : "",
+    show_user_bid: props.listing.show_user_bid,
+    base_price: props.listing.base_price,
+    quantity: props.listing.quantity,
+
+    discount_start: props.listing.discount_start
+      ? dateToISOLikeButLocal(new Date(props.listing.discount_start))
+      : "",
+    discount_end: props.listing.discount_end
+      ? dateToISOLikeButLocal(new Date(props.listing.discount_end))
+      : "",
+
+    discount_price: props.listing.discount_price || props.listing.base_price,
+  };
+
+  let [values, setValues] = useState(defaultValues);
+
+  const handleInputChange = (e) => {
+    let { name, value, checked } = e.target;
+    if (e.target.type === "checkbox") {
+      value = checked;
+    }
+    setValues({ ...values, [name]: value });
+  };
+
   let info;
   if (props.listing.auction_type == "Fixed") {
-    info = <FixedForm itemListing={props.listing}></FixedForm>;
+    info = (
+      <FixedSettingsForm
+        values={values}
+        handleInputChange={handleInputChange}
+      ></FixedSettingsForm>
+    );
   } else if (props.listing.auction_type == "Auction") {
-    info = <AuctionForm itemListing={props.listing}></AuctionForm>;
+    info = (
+      <AuctionSettingsForm
+        values={values}
+        handleInputChange={handleInputChange}
+      ></AuctionSettingsForm>
+    );
   }
+
+  const cancelListing = () => {
+    console.log("ready to cancel listing");
+  };
 
   return (
     <>
+      <ConfirmStopModal confirm={cancelListing} />
       <div
         className="modal fade"
-        id="listingModal"
-        tabIndex="-1"
-        aria-labelledby="listingModalLabel"
+        id="settingsModal"
+        tabindex="-1"
+        aria-labelledby="settingModalLabel"
         aria-hidden="true"
       >
         <div className="modal-dialog">
           <div className="modal-content">
             <div className="modal-header">
-              <h5 className="modal-title" id="listingModalLabel">
+              <h5 className="modal-title" id="settingModalLabel">
                 Edit Listing
               </h5>
               <button
@@ -34,66 +83,21 @@ export const SettingsModal = (props) => {
             </div>
             <div className="modal-body">
               <form>
+                {info}
                 <div className="row g-3 mb-3">
                   <div className="col-3">
-                    <label for="product" className="col-form-label">
-                      Product
-                    </label>
-                  </div>
-                  <div className="col-9">
-                    <input
-                      type="password"
-                      id="product"
-                      className="form-control"
-                    />
-                  </div>
-                </div>
-                <fieldset className="form-group mb-3">
-                  <div className="row">
-                    <legend className="col-form-label col-sm-3 pt-0">
-                      Type
-                    </legend>
-
-                    <div className="form-check">
-                      <input
-                        className="form-check-input"
-                        defaultChecked
-                        type="radio"
-                        name="gridRadios"
-                        id="gridRadios1"
-                        value="auction"
-                      />
-                      <label className="form-check-label" for="gridRadios1">
-                        Auction
-                      </label>
-                    </div>
-                    <div className="form-check">
-                      <input
-                        className="form-check-input"
-                        type="radio"
-                        name="gridRadios"
-                        id="gridRadios2"
-                        value="fixed"
-                      />
-                      <label className="form-check-label" for="gridRadios2">
-                        Fixed Price
-                      </label>
-                    </div>
-                  </div>
-                </fieldset>
-
-                <div>{info}</div>
-                <div className="row g-3 mb-3">
-                  <div className="col-3">
-                    <label for="description" className="col-form-label">
+                    <label htmlFor="description" className="col-form-label">
                       Description
                     </label>
                   </div>
                   <div className="col-9">
                     <textarea
                       className="form-control"
+                      name="description"
                       id="description"
                       rows="3"
+                      onChange={handleInputChange}
+                      value={values.description}
                     ></textarea>
                   </div>
                 </div>
@@ -104,11 +108,30 @@ export const SettingsModal = (props) => {
                 type="button"
                 className="btn btn-secondary"
                 data-bs-dismiss="modal"
+                data-bs-toggle="modal"
+                data-bs-target="#settingsModal"
               >
                 Close
               </button>
-              <button type="button" className="btn btn-primary">
+              <button
+                type="button"
+                className="btn btn-primary"
+                data-bs-dismiss="modal"
+                data-bs-toggle="modal"
+                data-bs-target="#settingsModal"
+              >
                 Save Changes
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger"
+                data-bs-dismiss="modal"
+                data-bs-toggle="modal"
+                data-bs-target="#settingsModal"
+                data-bs-toggle="modal"
+                data-bs-target="#confirmModal"
+              >
+                Stop Listing
               </button>
             </div>
           </div>

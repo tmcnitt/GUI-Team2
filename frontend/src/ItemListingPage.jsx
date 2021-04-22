@@ -31,7 +31,7 @@ export function ItemListingPage({ listing, setListing }) {
         type="button"
         className="btn btn-secondary m-4 float-end"
         data-bs-toggle="modal"
-        data-bs-target="#listingModal"
+        data-bs-target="#settingsModal"
       >
         Edit Listing
       </button>
