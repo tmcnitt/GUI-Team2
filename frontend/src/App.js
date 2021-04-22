@@ -62,9 +62,9 @@ export function App() {
             <PrivateRoute path="/listings">
               <ListingPage />
             </PrivateRoute>
-            <Route path="/transactions">
+            <PrivateRoute path="/transactions">
               <TransactionPage />
-            </Route>
+            </PrivateRoute>
             <PrivateRoute path="/" exact={true}>
               <UserDashboard />
             </PrivateRoute>
