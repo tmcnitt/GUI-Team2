@@ -9,9 +9,9 @@ import { capitalize } from "./utils";
 export function ItemListingPage({ listing, setListing, refresh }) {
   let info;
   if (listing.auction_type == "Auction") {
-    info = <Auction listing={listing}></Auction>;
+    info = <Auction listing={listing} setListing={setListing}></Auction>;
   } else {
-    info = <Fixed listing={listing}></Fixed>;
+    info = <Fixed listing={listing} setListing={setListing}></Fixed>;
   }
 
   let { baseURL } = useContext(AppContext);
@@ -35,7 +35,12 @@ export function ItemListingPage({ listing, setListing, refresh }) {
       >
         Edit Listing
       </button>
-      <SettingsModal listing={listing} refresh={refresh} setListing={setListing} reset={() => setListing(null)} />
+      <SettingsModal
+        listing={listing}
+        refresh={refresh}
+        setListing={setListing}
+        reset={() => setListing(null)}
+      />
       <div className="jumbotron container bg-light mt-5">
         <img
           className="float-start m-3"

@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { AppContext } from "./AppContext.js";
+import { axiosJWTHeader } from "./utils";
 
 export const Fixed = (props) => {
   let discount = null;
@@ -8,8 +10,25 @@ export const Fixed = (props) => {
         <p className="lead">Discount End Date: {props.listing.discount_end}</p>
       );
     }
-
   }
+
+  let [quantity, setQuantity] = useState(0);
+
+  const { baseURL, JWT, user } = useContext(AppContext);
+
+  let checkout = () => {
+    props.setListing(
+      Object.assign({}, props.listing, {
+        quantity: props.listing.quantity - quantity,
+      })
+    );
+
+    axios.post(
+      baseURL + "/fixed/" + `${props.listing.id}` + "/buy",
+      { new_bid },
+      { headers: axiosJWTHeader(JWT) }
+    );
+  };
 
   let qty = null;
   let buy = (
@@ -34,11 +53,14 @@ export const Fixed = (props) => {
               className="form-control"
               placeholder="Quantity"
               aria-describedby="button-addon2"
+              value={quantity}
+              onChange={(e) => setQuantity(e.target.value)}
             />
             <button
               className="btn btn-outline-secondary"
               type="button"
               id="button-addon2"
+              onClick={() => checkout()}
             >
               Buy
             </button>
@@ -50,7 +72,7 @@ export const Fixed = (props) => {
 
   let price = props.listing.base_price;
   if (new Date() < new Date(props.listing.discount_end)) {
-    price = props.listing.discount_price
+    price = props.listing.discount_price;
   }
 
   return (
