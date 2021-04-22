@@ -34,7 +34,7 @@ export function ListingPage({ selling }) {
 
     if (listing) {
         return (
-            <ItemListingPage listing={listing} setListing={setListing} />
+            <ItemListingPage listing={listing} setListing={setListing} refresh={getListings} />
         )
     }
 
@@ -46,8 +46,8 @@ export function ListingPage({ selling }) {
                     Create Listing
                 </button>
             </div>
-            <CreateListingModal show={show} setShow={setShow} />
-            <AuctionList listings={items} setListing={setListing} selling={selling} />
+            <CreateListingModal show={show} setShow={setShow} refresh={getListings} />
+            <AuctionList listings={items} setListing={setListing} refresh={getListings} />
         </div>
     )
 }

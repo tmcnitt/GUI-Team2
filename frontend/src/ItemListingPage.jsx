@@ -6,7 +6,7 @@ import axios from "axios";
 import { AppContext } from "./AppContext";
 import { capitalize } from "./utils";
 
-export function ItemListingPage({ listing, setListing }) {
+export function ItemListingPage({ listing, setListing, refresh }) {
   let info;
   if (listing.auction_type == "Auction") {
     info = <Auction listing={listing}></Auction>;
@@ -35,7 +35,7 @@ export function ItemListingPage({ listing, setListing }) {
       >
         Edit Listing
       </button>
-      <SettingsModal listing={listing} reset={() => setListing(null)} />
+      <SettingsModal listing={listing} refresh={refresh} setListing={setListing} reset={() => setListing(null)} />
       <div className="jumbotron container bg-light mt-5">
         <img
           className="float-start m-3"

@@ -3,9 +3,12 @@ import React, { useState } from "react";
 export const Fixed = (props) => {
   let discount = null;
   if (props.listing.discount_end) {
-    discount = (
-      <p className="lead">Discount End Date: {props.listing.discount_end}</p>
-    );
+    if (new Date(props.listing.discount_end) > new Date()) {
+      discount = (
+        <p className="lead">Discount End Date: {props.listing.discount_end}</p>
+      );
+    }
+
   }
 
   let qty = null;
@@ -44,10 +47,16 @@ export const Fixed = (props) => {
       </div>
     );
   }
+
+  let price = props.listing.base_price;
+  if (new Date() < new Date(props.listing.discount_end)) {
+    price = props.listing.discount_price
+  }
+
   return (
     <>
       <h3>
-        Price: <span className="badge bg-success">${props.listing.price}</span>
+        Price: <span className="badge bg-success">${price}</span>
       </h3>
       {qty}
       {discount}

@@ -56,27 +56,36 @@ export const SettingsModal = (props) => {
   }
 
   const cancelListing = () => {
+    const handler = () => {
+      props.refresh();
+      props.reset();
+    }
+
     if (props.listing.auction_type == "Fixed") {
       axios.delete(baseURL + "/fixed/" + `${props.listing.id}`, {
         headers: axiosJWTHeader(JWT),
-      });
+      }).then(handler);
     } else {
       axios.delete(baseURL + "/auctions/" + `${props.listing.id}`, {
         headers: axiosJWTHeader(JWT),
-      });
+      }).then(handler);
     }
-    props.reset();
   };
 
   const submit = () => {
+    const handler = () => {
+      props.refresh()
+      props.setListing(Object.assign({}, props.listing, values))
+    }
+
     if (props.listing.auction_type == "Fixed") {
       axios.put(baseURL + "/fixed/" + `${props.listing.id}`, values, {
         headers: axiosJWTHeader(JWT),
-      });
+      }).then(handler);
     } else {
       axios.put(baseURL + "/auctions/" + `${props.listing.id}`, values, {
         headers: axiosJWTHeader(JWT),
-      });
+      }).then(handler);
     }
   };
 
