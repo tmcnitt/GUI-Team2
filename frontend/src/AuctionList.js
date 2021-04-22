@@ -100,6 +100,7 @@ export function AuctionList({ selling, setListing }) {
     ]).then(axios.spread((auctions, fixed) => {
       setItems(formatAuctions(auctions).concat(formatFixed(fixed)))
       window.$(table.current).DataTable({
+        responsive: true,
         dom: 'Bfrtip',
         columnDefs: [
           {

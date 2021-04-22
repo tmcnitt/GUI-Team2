@@ -63,7 +63,7 @@ export function TransactionList({ transactions }) {
             headers: axiosJWTHeader(JWT)
         }).then((r) => {
             setTrans(r.data.data)
-            setdTable(window.$(table.current).DataTable())
+            setdTable(window.$(table.current).DataTable({ responsive: true }))
         })
     }
 
