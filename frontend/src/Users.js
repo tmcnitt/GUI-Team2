@@ -94,7 +94,7 @@ export function Users() {
   return (
     <div className="container h-100">
       <div className="h-100 row justify-content-center align-items-center">
-        <form className="col-4">{form}</form>
+        <form className="col-md-4">{form}</form>
       </div>
     </div>
   );
