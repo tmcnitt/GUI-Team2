@@ -604,16 +604,18 @@ module.exports = function routes(app, logger) {
   //DELETE -> /auctions/:id -> stop auction
   app.delete('/auctions/:id', async (req, res) => {
     jwt.verifyToken(req).then((user) => {
-      const id = req.body.id;
+      const id = req.param('id');
       const user_id = user.id;
 
-      const get = "SELECT * FROM auction auction.id = ? AND auction.list_user_id = ?"
-      pool.query(get, [id, user_id], (err, result) => {
+      const get = "SELECT * FROM auction WHERE auction.id = ? AND auction.list_user_id = ?"
+      pool.query(get, [id, user_id], (err, results) => {
         if (err) {
           res.status(400).send({
             success: false,
             msg: "Error deleteing auction",
           });
+          logger.error("Error deleting auction: \n", err);
+
           return
         }
 
@@ -626,8 +628,10 @@ module.exports = function routes(app, logger) {
               msg: "Error deleting auctions",
             });
           } else {
-            createNotification(req, res, result[0].bid_user_id, "An auction you were winning was cancelled!")
-            res.status(200).send({ success: true, msg: "Deleted auction", });
+            if (results[0].bid_user_id) {
+              createNotification(req, res, results[0].bid_user_id, "An auction you were winning was cancelled!")
+              res.status(200).send({ success: true, msg: "Deleted auction", });
+            }
           }
         });
       })
