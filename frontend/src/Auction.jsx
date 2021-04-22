@@ -30,7 +30,20 @@ export const Auction = (props) => {
       baseURL + "/auctions/" + `${props.listing.id}` + "/bid",
       { new_bid },
       { headers: axiosJWTHeader(JWT) }
-    );
+    ).then((r) => {
+      setTimeout(() => {
+        props.setBannerMessage("")
+      }, 5000)
+
+      props.setBannerMessage(r.data.msg)
+    }).catch((r) => {
+
+      setTimeout(() => {
+        props.setBannerMessage("")
+      }, 5000)
+
+      props.setBannerMessage(r.data.msg)
+    });;
   };
 
   let username = null;

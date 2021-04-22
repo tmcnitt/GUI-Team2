@@ -88,7 +88,6 @@ export function AuctionList({ setListing, listings }) {
 
   //Make the datatables instance
   const setup = () => {
-    console.log(table.current)
     window.$(table.current).DataTable({
       responsive: true,
       dom: 'Bfrtip',

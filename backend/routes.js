@@ -353,7 +353,7 @@ module.exports = function routes(app, logger) {
   })
 
   // POST /buy/{id} (user buys auction, update quantity or end listing and create transaction)
-  app.post('/buy/:id', (req, res) => {
+  app.post('/fixed/:id/buy', (req, res) => {
     const getAuction = "SELECT * FROM fixed_price WHERE id = ?";
     pool.query(getAuction, [req.param('id')], (err, auction) => {
       if (err) {

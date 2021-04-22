@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import { Auction } from "./Auction";
 import { Fixed } from "./Fixed";
 import { SettingsModal } from "./SettingsModal";
@@ -7,18 +7,30 @@ import { AppContext } from "./AppContext";
 import { capitalize } from "./utils";
 
 export function ItemListingPage({ listing, setListing, refresh }) {
+  let [bannerMessage, setBannerMessage] = useState("")
+
   let info;
   if (listing.auction_type == "Auction") {
-    info = <Auction listing={listing} setListing={setListing}></Auction>;
+    info = <Auction listing={listing} setListing={setListing} setBannerMessage={setBannerMessage}></Auction>;
   } else {
-    info = <Fixed listing={listing} setListing={setListing}></Fixed>;
+    info = <Fixed listing={listing} setListing={setListing} setBannerMessage={setBannerMessage}></Fixed>;
   }
 
   let { baseURL } = useContext(AppContext);
 
+  let banner = <></>;
+  if (bannerMessage) {
+    banner = (
+      <div className="alert alert-primary" role="alert">
+        {bannerMessage}
+      </div>
+    );
+  }
+
   // {listing.item.price}
   return (
     <>
+      {banner}
       <button
         type="button"
         className="btn btn-secondary btn-md m-4 float-none"
@@ -26,7 +38,6 @@ export function ItemListingPage({ listing, setListing, refresh }) {
       >
         Back To Listings
       </button>
-
       <button
         type="button"
         className="btn btn-secondary m-4 float-end"

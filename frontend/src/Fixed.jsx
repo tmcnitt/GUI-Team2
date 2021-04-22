@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
+import axios from "axios"
 import { AppContext } from "./AppContext.js";
 import { axiosJWTHeader } from "./utils";
 
@@ -25,9 +26,22 @@ export const Fixed = (props) => {
 
     axios.post(
       baseURL + "/fixed/" + `${props.listing.id}` + "/buy",
-      { new_bid },
+      { purchase_quantity: quantity },
       { headers: axiosJWTHeader(JWT) }
-    );
+    ).then((r) => {
+      setTimeout(() => {
+        props.setBannerMessage("")
+      }, 5000)
+
+      props.setBannerMessage(r.data.msg)
+    }).catch((r) => {
+
+      setTimeout(() => {
+        props.setBannerMessage("")
+      }, 5000)
+
+      props.setBannerMessage(r.data.msg)
+    });
   };
 
   let qty = null;
