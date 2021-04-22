@@ -36,8 +36,19 @@ function AuctionItem(props) {
     compareBtn = <button type="button" className="form-control btn btn-primary" onClick={(e) => handleClick(e, "0")}>Remove from Compare</button>
   }
 
+  const handleRowClick = (e) => {
+    //Datatables injects a before + if we are in responsive mode
+    //If it is displayed and was clicked, return so it can be expanded
+    const before = window.getComputedStyle(e.target, "before");
+    const val = before.getPropertyValue("content")
+    if (val != "none") {
+      return
+    }
+    props.setListing(props.listing)
+  }
+
   return (
-    <tr className="itemRow" onClick={() => props.setListing(props.listing)}>
+    <tr className="itemRow" onClick={(e) => handleRowClick(e)}>
       <th scope="row">{capitalize(props.listing.product_name)}</th>
       <td>{props.listing.auction_type}</td>
       <td>${price}</td>
@@ -155,7 +166,7 @@ export function AuctionList({ selling, setListing }) {
 
   return (
     <>
-      <div className="col-4">
+      <div className="col-4-lg col-12">
         <form className="row g-3">
           <div className="col-md-4">
             <label htmlFor="min" className="form-label">Low Price</label>
