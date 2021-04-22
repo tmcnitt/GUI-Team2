@@ -40,6 +40,8 @@ export function ListingPage({ selling }) {
         )
     }
 
+    //When key changes, the component is destroyed and rerendered
+    //We do this so we can resync state with datatables
     return (
         <div className="container mt-5">
             <div className="d-flex justify-content-between">
@@ -49,7 +51,7 @@ export function ListingPage({ selling }) {
                 </button>
             </div>
             <CreateListingModal show={show} setShow={setShow} refresh={getListings} />
-            <AuctionList listings={items} setListing={setListing} refresh={getListings} />
+            <AuctionList key={items.auctions.length + items.fixed.length} listings={items} setListing={setListing} refresh={getListings} />
         </div>
     )
 }

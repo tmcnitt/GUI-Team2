@@ -79,7 +79,6 @@ export function AuctionList({ setListing, listings }) {
       init.current = true;
     }
 
-    console.log('auction redraw')
     //Otherwise just update it with row data
     const dTable = window.$(table.current).DataTable()
     if (dTable) {
@@ -166,6 +165,10 @@ export function AuctionList({ setListing, listings }) {
         return true
       }
     );
+
+    return () => {
+      window.$(table.current).DataTable().destroy()
+    }
   }, [])
 
   const table = useRef();
