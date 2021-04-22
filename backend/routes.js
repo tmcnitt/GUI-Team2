@@ -203,7 +203,7 @@ module.exports = function routes(app, logger) {
 
       let mod = "is_finished = 0"
       if (id) {
-        mod = " AND db.fixed_price.list_user_id = ?"
+        mod += " AND db.fixed_price.list_user_id = ?"
       }
 
       // get the auction

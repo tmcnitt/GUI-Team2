@@ -8,12 +8,14 @@ module.exports.makeJWT = (id) => {
 };
 
 const checkJWT = (token) => {
-  let decoded = jwt.verify(token, JWT_KEY);
-  if (!decoded) {
-    return { success: false };
-  }
-
   return new Promise((resolve, reject) => {
+
+    let decoded = jwt.verify(token, JWT_KEY);
+    if (!decoded) {
+      reject()
+      return
+    }
+
     pool.query(
       "SELECT * FROM users WHERE id = ?",
       [decoded],
@@ -21,7 +23,9 @@ const checkJWT = (token) => {
         if (err) {
           reject();
         } else {
-          resolve(result[0]);
+          if (result.length > 0) {
+            resolve(result[0]);
+          }
         }
       });
   });
