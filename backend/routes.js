@@ -201,7 +201,7 @@ module.exports = function routes(app, logger) {
 
       const id = req.param('id')
 
-      let mod = ""
+      let mod = "is_finished = 0"
       if (id) {
         mod = " AND db.fixed_price.list_user_id = ?"
       }
@@ -252,7 +252,7 @@ module.exports = function routes(app, logger) {
           ON db.users.id = sell_history.list_user_id 
           LEFT JOIN products 
           ON products.id = fixed_price.product_id
-          WHERE is_finished = 0
+          WHERE 
         ` + mod + " GROUP BY db.fixed_price.id HAVING product_name IS NOT NULL";
 
       pool.query(sql, [id], (err, rows) => {
@@ -277,27 +277,28 @@ module.exports = function routes(app, logger) {
   })
 
   // PUT /fixed/{id} (update an auction with discount price, description, base price, discount end)
-  app.put('/fixed/', (req, res) => {
+  app.put('/fixed/:id', (req, res) => {
     jwt.verifyToken(req).then((user) => {
       const user_id = user.id;
       const id = req.param('id');
       const auction = "SELECT description, discount_price, base_price, discount_end FROM fixed_price WHERE list_user_id = ? AND id = ?";
 
       pool.query(auction, [user_id, id], (err, results) => {
-        if (err) {
+        if (err || results.length == 0) {
           logger.error("Error retrieving auction information: \n", err);
           res
             .status(400)
             .send({ success: false, msg: "Error retrieving auction information" });
         } else {
+          console.log(results[0])
           const description = req.body.description || results[0].description;
-          const discount_price = req.body.discount_price || results[0].discount_price;
+          const discount_price = req.body.discount_price || results[0].discount_price || undefined;
           const base_price = req.body.base_price || results[0].base_price;
-          const discount_end = req.body.discount_end || results[0].discount_end;
+          const discount_end = req.body.discount_end || results[0].discount_end || undefined;
           const quantity = req.body.quantity || results[0].quantity;
-          const sql = "UPDATE fixed_price SET description = ?, discount_price = ?, base_price = ?, discount_end = ? WHERE list_user_id = ? AND id = ?";
+          const sql = "UPDATE fixed_price SET description = ?, discount_price = ?, base_price = ?, discount_end = ?, quantity = ? WHERE list_user_id = ? AND id = ?";
 
-          pool.query(sql, [description, discount_price, base_price, discount_end, user_id, id], (error, result) => {
+          pool.query(sql, [description, discount_price, base_price, discount_end, quantity, user_id, id], (error, result) => {
             if (error) {
               logger.error("Error updating auction information: \n", err);
               res
@@ -317,7 +318,7 @@ module.exports = function routes(app, logger) {
   })
 
   // DELETE /fixed/{id} (delete selected auction)
-  app.delete('/fixed/', (req, res) => {
+  app.delete('/fixed/:id', (req, res) => {
     jwt.verifyToken(req).then((user) => {
       const user_id = user.id;
       const sql = "DELETE FROM fixed_price WHERE id = ? AND list_user_id = ?";

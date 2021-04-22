@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-
 import './AuctionList.css'
 import { CreateListingModal } from "./CreateListingModal";
 import { AuctionList } from './AuctionList'

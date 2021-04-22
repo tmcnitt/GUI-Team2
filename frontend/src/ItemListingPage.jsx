@@ -35,7 +35,7 @@ export function ItemListingPage({ listing, setListing }) {
       >
         Edit Listing
       </button>
-      <SettingsModal listing={listing} />
+      <SettingsModal listing={listing} reset={() => setListing(null)} />
       <div className="jumbotron container bg-light mt-5">
         <img
           className="float-start m-3"

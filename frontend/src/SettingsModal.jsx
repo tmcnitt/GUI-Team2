@@ -1,10 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { FixedSettingsForm } from "./FixedSettingsForm";
 import { AuctionSettingsForm } from "./AuctionSettingsForm";
 import { ConfirmStopModal } from "./ConfirmStopModal";
-import { dateToISOLikeButLocal } from "./utils";
+import { axiosJWTHeader, dateToISOLikeButLocal } from "./utils";
+import axios from "axios";
+import { AppContext } from "./AppContext.js";
 
 export const SettingsModal = (props) => {
+  let { baseURL, JWT } = useContext(AppContext);
+
   const defaultValues = {
     description: props.listing.description,
     start_date: props.listing.start_date
@@ -17,9 +21,6 @@ export const SettingsModal = (props) => {
     base_price: props.listing.base_price,
     quantity: props.listing.quantity,
 
-    discount_start: props.listing.discount_start
-      ? dateToISOLikeButLocal(new Date(props.listing.discount_start))
-      : "",
     discount_end: props.listing.discount_end
       ? dateToISOLikeButLocal(new Date(props.listing.discount_end))
       : "",
@@ -55,7 +56,28 @@ export const SettingsModal = (props) => {
   }
 
   const cancelListing = () => {
-    console.log("ready to cancel listing");
+    if (props.listing.auction_type == "Fixed") {
+      axios.delete(baseURL + "/fixed/" + `${props.listing.id}`, {
+        headers: axiosJWTHeader(JWT),
+      });
+    } else {
+      axios.delete(baseURL + "/auctions/" + `${props.listing.id}`, {
+        headers: axiosJWTHeader(JWT),
+      });
+    }
+    props.reset();
+  };
+
+  const submit = () => {
+    if (props.listing.auction_type == "Fixed") {
+      axios.put(baseURL + "/fixed/" + `${props.listing.id}`, values, {
+        headers: axiosJWTHeader(JWT),
+      });
+    } else {
+      axios.put(baseURL + "/auctions/" + `${props.listing.id}`, values, {
+        headers: axiosJWTHeader(JWT),
+      });
+    }
   };
 
   return (
@@ -119,6 +141,7 @@ export const SettingsModal = (props) => {
                 data-bs-dismiss="modal"
                 data-bs-toggle="modal"
                 data-bs-target="#settingsModal"
+                onClick={() => submit()}
               >
                 Save Changes
               </button>

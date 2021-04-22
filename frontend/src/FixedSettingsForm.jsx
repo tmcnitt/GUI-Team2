@@ -13,32 +13,6 @@ export function FixedSettingsForm({ values, handleInputChange }) {
 
   return (
     <>
-      <div className="row g-3 mb-1">
-        <div className="col-3">
-          <label htmlFor="discount_start" className="col-form-label">
-            Discount Start
-          </label>
-        </div>
-        <div className="col-7">
-          <input
-            type="datetime-local"
-            name="discount_start"
-            id="discount_start"
-            onChange={handleInputChange}
-            value={values.discount_start}
-            className="form-control"
-          />
-        </div>
-        <div className="col-2">
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={() => setNow("discount_start")}
-          >
-            Now
-          </button>
-        </div>
-      </div>
       <div className="row g-3 mb-3">
         <div className="col-3">
           <label htmlFor="discount_end" className="col-form-label">
