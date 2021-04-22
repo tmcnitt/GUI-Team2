@@ -60,6 +60,12 @@ export function AuctionList({ selling, setListing }) {
 
   let filter = false
 
+  const update = (l, b, u) => {
+    l.current_bid = b;
+    l.bid_username = u;
+  }
+
+
   const redraw = () => {
     let dTable = window.$(table.current).DataTable()
     if (dTable) {

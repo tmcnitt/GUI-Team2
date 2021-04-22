@@ -1,8 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { timeLeft } from "./utils";
+import axios from "axios"
+import { axiosJWTHeader } from './utils'
+import { AppContext } from "./AppContext.js";
 
 export const Auction = (props) => {
   let [remain, setRemain] = useState(null);
+  const { baseURL, JWT } = useContext(AppContext);
+  let url = "http://localhost:3005/";
 
   useEffect(() => {
     setRemain(timeLeft(props.listing.end_date));
@@ -12,6 +17,14 @@ export const Auction = (props) => {
 
     return () => clearTimeout(timer);
   });
+
+  const onBidButton = (new_bid) => {
+    console.log(new_bid);
+    props.update(props.listing, new_bid, props.listing.bid_username);
+    axios.post(baseURL + "/auctions/" + `${props.listing.id}` +"/bid", {new_bid}, { headers: axiosJWTHeader(JWT) });
+
+}
+
 
   let username = null;
   if (props.listing.bid_username) {
@@ -31,7 +44,7 @@ export const Auction = (props) => {
         <button
           type="button"
           className="btn btn-primary btn-lg btn-block mt-4"
-          onClick={() => this.onAddClick()}
+          onClick={() => onBidButton(props.listing.current_bid + 1)}
         >
           Bid
         </button>
