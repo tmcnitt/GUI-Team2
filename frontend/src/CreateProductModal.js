@@ -40,7 +40,7 @@ export function CreateProductModal({ products, setProducts }) {
 
 
     return (
-        <div className="modal fade" id="productModal" tabindex="1" aria-labelledby="productModalLabel" aria-hidden="true">
+        <div className="modal fade modal-fullscreen-md-down" id="productModal" tabindex="1" aria-labelledby="productModalLabel" aria-hidden="true">
             <div className="modal-dialog">
                 <div className="modal-content">
                     <div className="modal-header">
