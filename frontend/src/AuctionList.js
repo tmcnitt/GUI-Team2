@@ -1,18 +1,22 @@
-import React, { useState, useRef, useEffect, useContext, } from "react";
-
+import React, { useState, useRef, useEffect, useLayoutEffect, } from "react";
 import './AuctionList.css'
-import axios from "axios";
-import { AppContext } from "./AppContext.js";
 import { capitalize, relativeTime, axiosJWTHeader } from './utils'
 
 
-function AuctionItem(props) {
-
+export function AuctionItem(props) {
   let [compare, setCompare] = useState(0)
 
-  useEffect(() => {
+  //We dont want to call rerender if this is our first time
+  //Only cause table to rerender when something has actually changed
+  //Done beacuse datatables makes some things harder than they should 
+  const firstUpdate = useRef(true);
+  useLayoutEffect(() => {
+    if (firstUpdate.current) {
+      firstUpdate.current = false;
+      return;
+    }
     props.redraw()
-  })
+  }, [compare])
 
   let reviews = "None"
   if (props.listing.avglist_user_score) {
@@ -63,79 +67,81 @@ function AuctionItem(props) {
 }
 
 
-export function AuctionList({ selling, setListing }) {
-  let [items, setItems] = useState([]);
-
-
-  const { baseURL, user, JWT } = useContext(AppContext);
-
+export function AuctionList({ setListing, listings }) {
   let filter = false
 
+  let init = useRef(false);
   const redraw = () => {
-    let dTable = window.$(table.current).DataTable()
+    //If we have not created instance
+    //Do that now
+    if (!init.current) {
+      setup()
+      init.current = true;
+    }
+
+    //Otherwise just update it with row data
+    const dTable = window.$(table.current).DataTable()
     if (dTable) {
       dTable.rows().invalidate().draw()
     }
   }
 
-  useEffect(() => {
-    const formatAuctions = (r) => {
-      let items = []
-      r.data.data.forEach(auction => {
-        auction.auction_type = "Auction"
-        items.push(
-          <AuctionItem key={auction.id + auction.auction_type} listing={auction} setListing={setListing} redraw={redraw} />
-        )
-      })
-      return items
-    }
-
-    const formatFixed = (r) => {
-      let items = []
-      r.data.data.forEach(auction => {
-        auction.auction_type = "Fixed"
-        items.push(
-          <AuctionItem key={auction.id + auction.auction_type} listing={auction} setListing={setListing} redraw={redraw} />
-        )
-      })
-      return items
-    }
-
-    let mod = ""
-    if (selling) {
-      mod = "/" + user.id
-    }
-    axios.all([
-      axios.get(baseURL + "/auctions" + mod, { headers: axiosJWTHeader(JWT) }),
-      axios.get(baseURL + "/fixed" + mod, { headers: axiosJWTHeader(JWT) })
-    ]).then(axios.spread((auctions, fixed) => {
-      setItems(formatAuctions(auctions).concat(formatFixed(fixed)))
-      window.$(table.current).DataTable({
-        responsive: true,
-        dom: 'Bfrtip',
-        columnDefs: [
-          {
-            "targets": [7],
-            "visible": false,
-            "searchable": true,
-          }
-        ],
-        buttons: [
-          {
-            text: 'Toggle Compare',
-            action: function (e, dt, node, config) {
-              filter = !filter
-              if (filter) {
-                dt.column(7).search("1").draw()
-              } else {
-                dt.column(7).search("").draw()
-              }
+  //Make the datatables instance
+  const setup = () => {
+    console.log(table.current)
+    window.$(table.current).DataTable({
+      responsive: true,
+      dom: 'Bfrtip',
+      columnDefs: [
+        {
+          "targets": [7],
+          "visible": false,
+          "searchable": true,
+        }
+      ],
+      buttons: [
+        {
+          text: 'Toggle Compare',
+          action: function (e, dt, node, config) {
+            filter = !filter
+            if (filter) {
+              dt.column(7).search("1").draw()
+            } else {
+              dt.column(7).search("").draw()
             }
           }
-        ]
-      })
-    }))
+        }
+      ]
+    })
+  }
 
+  let items = []
+
+  listings.auctions.forEach(auction => {
+    auction.auction_type = "Auction"
+    items.push(
+      <AuctionItem key={auction.id + auction.auction_type} listing={auction} setListing={setListing} redraw={() => redraw()} />
+    )
+  })
+
+
+  listings.fixed.forEach(auction => {
+    auction.auction_type = "Fixed"
+    items.push(
+      <AuctionItem key={auction.id + auction.auction_type} listing={auction} setListing={setListing} redraw={() => redraw()} />
+    )
+  })
+
+  useLayoutEffect(() => {
+    //Do we have listings? 
+    //Need after render for datatables
+    if (items.length > 0) {
+      redraw()
+    }
+  })
+
+  //Push our custom compare on first load
+  useEffect(() => {
     window.$.fn.dataTable.ext.search.push(
       function (settings, data, dataIndex) {
         if (settings.nTable.id != "listings") {
@@ -159,7 +165,6 @@ export function AuctionList({ selling, setListing }) {
         return true
       }
     );
-
   }, [])
 
   const table = useRef();

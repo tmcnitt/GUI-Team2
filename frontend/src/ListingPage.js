@@ -1,13 +1,36 @@
-import React, { useState } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import './AuctionList.css'
 import { CreateListingModal } from "./CreateListingModal";
-import { AuctionList } from './AuctionList'
+import { AuctionList, AuctionItem } from './AuctionList'
 import { ItemListingPage } from "./ItemListingPage";
-
+import { AppContext } from "./AppContext.js";
+import axios from "axios";
+import { axiosJWTHeader } from './utils'
 
 export function ListingPage({ selling }) {
+    const { baseURL, user, JWT } = useContext(AppContext);
+
     let [show, setShow] = useState(false)
     let [listing, setListing] = useState(null)
+    let [items, setItems] = useState({ 'auctions': [], 'fixed': [] });
+
+    const getListings = () => {
+        let mod = ""
+        if (selling) {
+            mod = "/" + user.id
+        }
+
+        axios.all([
+            axios.get(baseURL + "/auctions" + mod, { headers: axiosJWTHeader(JWT) }),
+            axios.get(baseURL + "/fixed" + mod, { headers: axiosJWTHeader(JWT) })
+        ]).then(axios.spread((auctions, fixed) => {
+            setItems({ 'auctions': auctions.data.data, 'fixed': fixed.data.data })
+        }))
+    }
+
+    useEffect(() => {
+        getListings()
+    }, [])
 
     if (listing) {
         return (
@@ -24,7 +47,7 @@ export function ListingPage({ selling }) {
                 </button>
             </div>
             <CreateListingModal show={show} setShow={setShow} />
-            <AuctionList setListing={setListing} selling={selling} />
+            <AuctionList listings={items} setListing={setListing} selling={selling} />
         </div>
     )
 }
