@@ -1,77 +1,56 @@
-import React from "react";
-import { Product } from "./models/Product";
-import { Listing } from "./models/Listing";
+import React, { useContext } from "react";
 import { Auction } from "./Auction";
 import { Fixed } from "./Fixed";
+import { SettingsModal } from "./SettingsModal";
+import axios from "axios";
+import { AppContext } from "./AppContext";
+import { capitalize } from "./utils";
 
-export class ItemListingPage extends React.Component {
-  constructor() {
-    super();
-    this.item = new Product(
-      1,
-      "Lumber",
-      "The best lumber ever from the rainforest.",
-      "https://via.placeholder.com/300",
-      "Bid"
-    );
-    this.state = new Listing(
-      this.item,
-      1,
-      "Lumber",
-      "The best lumber ever from the rainforest.",
-      "https://via.placeholder.com/300",
-      "Bid"
-    );
+export function ItemListingPage({ listing, setListing }) {
+  let info;
+  if (listing.auction_type == "Auction") {
+    info = <Auction listing={listing}></Auction>;
+  } else {
+    info = <Fixed listing={listing}></Fixed>;
   }
 
-  state = {
-    id: "",
-    name: "",
-    description: "",
-    price: "",
-    imageUrl: "",
-    auctionType: "",
-  };
+  let { baseURL } = useContext(AppContext);
 
-  render() {
-    let info;
-    if (this.state.auctionType == "Bid") {
-      info = <Auction></Auction>;
-    } else if (this.state.auctionType == "Buy") {
-      info = <Fixed></Fixed>;
-    }
+  // {listing.item.price}
+  return (
+    <>
+      <button
+        type="button"
+        className="btn btn-secondary btn-md m-4 float-none"
+        onClick={() => setListing(null)}
+      >
+        Back To Listings
+      </button>
 
-    return (
-      <>
-        <button type="button" className="btn btn-secondary btn-md m-4">
-          {" "}
-          Back To Listings{" "}
-        </button>
-        <div class="jumbotron container bg-light mt-5">
-          <div class="container-fluid">
-            <img
-              class="float-left img-thumbnail mr-5 mb-5"
-              src={this.state.imageUrl}
-            ></img>
-            <h1 class="display-4">{this.state.name}</h1>
-            <h1>
-              <span class="badge badge-success badge-lg">
-                {this.state.price}
-              </span>
-            </h1>
-            <p class="lead">{this.state.description}</p>
-            <div>{info}</div>
-            <button
-              type="button"
-              className="btn btn-primary btn-lg btn-block mt-4"
-              onClick={() => this.onAddClick()}
-            >
-              {this.state.auctionType}
-            </button>
-            <div class="clearfix"></div>
-          </div>
+      <button
+        type="button"
+        class="btn btn-secondary m-4 float-end"
+        data-bs-toggle="modal"
+        data-bs-target="#listingModal"
+      >
+        Edit Listing
+      </button>
+      <SettingsModal listing={listing} />
+      <div class="jumbotron container bg-light mt-5">
+        <img
+          class="float-start m-3"
+          src={baseURL + "/products/" + listing.product_id}
+        ></img>
+        <div class="mx-auto">
+          <h1 class="display-4">{capitalize(listing.product_name)}</h1>
+          <h1>
+            <span class="badge badge-success badge-lg"></span>
+          </h1>
+          <p class="lead">{capitalize(listing.description)}</p>
+          <div>{info}</div>
+          <div class="float-end"></div>
         </div>
-      </>
-    );
-  }
+      </div>
+    </>
+  );
 }

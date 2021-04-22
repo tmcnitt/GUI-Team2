@@ -197,30 +197,82 @@ module.exports = function routes(app, logger) {
   // GET /fixed (get all current fixed options)
   //GET -> /fixed/:id -> get all running fixed listed by user with id
   app.get('/fixed/:id?', (req, res) => {
-    const id = req.param('id')
+    jwt.verifyToken(req).then(() => {
 
-    let mod = ""
-    if (id) {
-      mod = " AND list_user_id = ?"
-    }
+      const id = req.param('id')
 
-    // if there is no issue obtaining a connection, execute query and release connection
-    const sql = "SELECT * FROM fixed_price WHERE is_finished = 0" + mod;
-    pool.query(sql, [id], (err, rows) => {
-      if (err) {
-        logger.error("Error getting fixed price listings: \n", err);
-        res
-          .status(400)
-          .send({ success: false, msg: "Error getting fixed price listings" });
-      } else {
-        rows.forEach((row) => {
-          row.price_for_quantity = getListingPrice(row.base_price, row.discount_price, row.discount_end, row.quantity);
-          row.single_price = getListingPrice(row.base_price, row.discount_price, row.discount_end, 1);
-        })
-        res
-          .status(200)
-          .send({ success: true, data: rows })
+      let mod = ""
+      if (id) {
+        mod = " AND db.fixed_price.list_user_id = ?"
       }
+
+      // get the auction
+      // Convert the user id into a username for the table
+      // Convert the reviews into an average score
+      const sql = `
+          SELECT 
+            db.fixed_price.*, 
+            IF(
+              discount_end IS NOT NULL and now() < discount_end, 
+              discount_price, 
+              base_price
+            ) as price,
+            db.users.username as list_username,
+            AVG(db.review.stars) as avglist_user_score,
+            bought_history.buy_count as list_user_buy_count,
+            sell_history.sell_count as list_user_sell_count,
+            products.name as product_name
+          FROM 
+            db.fixed_price
+          LEFT JOIN 
+            db.users 
+          ON db.users.id = db.fixed_price.list_user_id
+          LEFT JOIN
+            db.review
+          ON db.users.id = db.review.reviewee_id
+          LEFT JOIN (
+            SELECT 
+              purchase_user_id, 
+              COUNT(*) as buy_count
+            FROM 
+              transactions 
+            GROUP BY 
+              purchase_user_id
+          ) as bought_history
+          ON db.users.id = bought_history.purchase_user_id 
+          LEFT JOIN (
+            SELECT 
+              list_user_id, 
+              COUNT(*) as sell_count
+            FROM 
+              transactions 
+            GROUP BY 
+            list_user_id
+          ) as sell_history
+          ON db.users.id = sell_history.list_user_id 
+          LEFT JOIN products 
+          ON products.id = fixed_price.product_id
+          WHERE is_finished = 0
+        ` + mod + " GROUP BY db.fixed_price.id HAVING product_name IS NOT NULL";
+
+      pool.query(sql, [id], (err, rows) => {
+        if (err) {
+          logger.error("Error getting fixed price listings: \n", err);
+          res
+            .status(400)
+            .send({ success: false, msg: "Error getting fixed price listings" });
+        } else {
+          rows.forEach((row) => {
+            row.price_for_quantity = getListingPrice(row.base_price, row.discount_price, row.discount_end, row.quantity);
+            row.single_price = getListingPrice(row.base_price, row.discount_price, row.discount_end, 1);
+          })
+          res
+            .status(200)
+            .send({ success: true, data: rows })
+        }
+      })
+    }).catch(() => {
+      res.status(400).end();
     })
   })
 
@@ -314,7 +366,7 @@ module.exports = function routes(app, logger) {
                 .status(400)
                 .send({ success: false, msg: "Error updating auction information" });
             } else {
-              createTransaction(req, res, 2, purchase_quantity, auction);
+              createTransactionAndNotification(req, res, 2, purchase_quantity, auction, "Some of your fixed auction has been sold.");
             }
           });
         } else if (purchase_quantity == auction[0].quantity) {
@@ -327,7 +379,7 @@ module.exports = function routes(app, logger) {
                 .send({ success: false, msg: "Error updating auction information" });
             } else {
               const transactionID = req.body.id;
-              createTransaction(req, res, 2, purchase_quantity, auction);
+              createTransactionAndNotification(req, res, 2, purchase_quantity, auction, "Your fixed price auction has ended");
             }
           });
         } else {
@@ -341,8 +393,42 @@ module.exports = function routes(app, logger) {
 
   app.get('/transactions', (req, res) => {
     jwt.verifyToken(req).then((user) => {
-      const sql = "SELECT * FROM transactions WHERE purchase_user_id = ?";
-      pool.query(sql, [user.id], (err, results) => {
+      //get the transcation and see if there is a mutal review 
+      const sql = `
+        SELECT 
+          transactions.*,
+          purchaser_reviews.stars as purchaser_reviews_stars,
+          lister_reviews.stars as lister_reviews_stars,
+          purchase_user_id = ? as is_purchaser,
+          products.name as product_name,
+          list_user.username as lister_username,
+          purchase_user.username as purchaser_username
+        FROM 
+          transactions 
+        LEFT JOIN
+          db.review as purchaser_reviews
+        ON
+            transactions.list_user_id = purchaser_reviews.reviewee_id AND
+            transactions.purchase_user_id = purchaser_reviews.reviewer_id
+        LEFT JOIN
+          db.review as lister_reviews
+        ON
+            transactions.purchase_user_id = lister_reviews.reviewee_id AND
+            transactions.list_user_id = lister_reviews.reviewer_id
+        LEFT JOIN
+          products
+        ON products.id = transactions.product_id  
+        LEFT JOIN
+          users as purchase_user
+        ON purchase_user.id = transactions.purchase_user_id  
+        LEFT JOIN
+          users as list_user
+        ON list_user.id = transactions.list_user_id
+
+        WHERE 
+          purchase_user_id = ? OR list_user_id = ?
+        `;
+      pool.query(sql, [user.id, user.id, user.id], (err, results) => {
         if (err) {
           logger.error("Error getting your transactions: \n", err);
           res
@@ -372,7 +458,7 @@ module.exports = function routes(app, logger) {
         }
         else {
           sql = "INSERT INTO notification (user_id, has_seen, date, text) VALUES (?, 0, now(), ?)";
-          pool.query(sql, [user.id, "You have a new review!"], (error, results) => {
+          pool.query(sql, [req.body.reviewee, "You have a new review!"], (error, results) => {
             if (err) {
               logger.error("Error adding notification: \n", err);
               res.status(400).send({ success: false, msg: "Error adding notification" });
@@ -402,7 +488,9 @@ module.exports = function routes(app, logger) {
           res.status(200).send({ success: true, msg: "Got User Reviews", data: rows })
         }
       })
-    });
+    }).catch(() => {
+      res.status(400).end();
+    });;
   });
 
   app.post('/auctions', async (req, res) => {
@@ -430,30 +518,86 @@ module.exports = function routes(app, logger) {
             .send({ success: true, msg: "Auction successfully created" });
         }
       });
-    });
+    }).catch(() => {
+      res.status(400).end();
+    });;
   })
 
 
   //GET -> /auctions -> get all running auctions
   //GET -> /auctions/:id -> get all running auctions listed by user with id
   app.get('/auctions/:id?', function (req, res) {
-    const id = req.param('id')
-    let mod = ""
-    if (id) {
-      mod = " AND list_user_id = ?"
-    }
-    const sql = "SELECT * FROM auction WHERE is_finished = false AND now() > start_date AND now() < end_date" + mod;
-    pool.query(sql, [id], (err, rows) => {
-      if (err) {
-        logger.error("Error retrieving auctions: \n", err);
-        res.status(400).send({
-          success: false,
-          msg: "Error retrieving auctions",
-        });
-      } else {
-        res.status(200).send({ success: true, data: rows });
+    jwt.verifyToken(req).then(() => {
+
+      const id = req.param('id')
+      let mod = ""
+      if (id) {
+        mod = " AND db.auction.list_user_id = ?"
       }
-    })
+
+      // get the auction
+      // Convert the user id into a username for the table
+      // Convert the reviews into an average score
+      const sql = `
+      SELECT 
+        db.auction.*,
+        db.users.username as list_username,
+        AVG(db.review.stars) as avglist_user_score,
+        bought_history.buy_count as list_user_buy_count,
+        sell_history.sell_count as list_user_sell_count,
+        products.name as product_name,
+        IF(auction.show_user_bid, bid_user.username , "") as bid_username
+      FROM 
+        db.auction 
+      LEFT JOIN 
+        db.users 
+      ON db.users.id = db.auction.list_user_id
+      LEFT JOIN
+        db.review
+      ON db.users.id = db.review.reviewee_id
+      LEFT JOIN (
+        SELECT 
+          purchase_user_id, 
+          COUNT(*) as buy_count
+        FROM 
+          transactions 
+        GROUP BY 
+          purchase_user_id
+      ) as bought_history
+      ON db.users.id = bought_history.purchase_user_id 
+      LEFT JOIN (
+        SELECT 
+          list_user_id, 
+          COUNT(*) as sell_count
+        FROM 
+          transactions 
+        GROUP BY 
+        list_user_id
+      ) as sell_history
+      ON db.users.id = sell_history.list_user_id
+      LEFT JOIN products 
+      ON products.id = auction.product_id
+      LEFT JOIN users as bid_user
+      ON users.id = auction.bid_user_id
+      WHERE 
+        is_finished = false AND 
+        now() > start_date AND 
+        now() < end_date` + mod + "  GROUP BY db.auction.id HAVING product_name IS NOT NULL";
+
+      pool.query(sql, [id], (err, rows) => {
+        if (err) {
+          logger.error("Error retrieving auctions: \n", err);
+          res.status(400).send({
+            success: false,
+            msg: "Error retrieving auctions",
+          });
+        } else {
+          res.status(200).send({ success: true, data: rows });
+        }
+      })
+    }).catch(() => {
+      res.status(400).end();
+    });
   });
 
   //DELETE -> /auctions/:id -> stop auction
@@ -461,19 +605,34 @@ module.exports = function routes(app, logger) {
     jwt.verifyToken(req).then((user) => {
       const id = req.body.id;
       const user_id = user.id;
-      const sql = "DELETE FROM auction WHERE auction.id = ? AND auction.list_user_id = ?";
-      pool.query(sql, [id, user_id], (err, result) => {
+
+      const get = "SELECT * FROM auction auction.id = ? AND auction.list_user_id = ?"
+      pool.query(get, [id, user_id], (err, result) => {
         if (err) {
-          logger.error("Error deleting auction: \n", err);
           res.status(400).send({
             success: false,
-            msg: "Error deleting auctions",
+            msg: "Error deleteing auction",
           });
-        } else {
-          res.status(200).send({ success: true, msg: "Deleted auction", });
+          return
         }
-      });
-    });
+
+        const sql = "DELETE FROM auction WHERE auction.id = ? AND auction.list_user_id = ?";
+        pool.query(sql, [id, user_id], (err) => {
+          if (err) {
+            logger.error("Error deleting auction: \n", err);
+            res.status(400).send({
+              success: false,
+              msg: "Error deleting auctions",
+            });
+          } else {
+            createNotification(req, res, result[0].bid_user_id, "An auction you were winning was cancelled!")
+            res.status(200).send({ success: true, msg: "Deleted auction", });
+          }
+        });
+      })
+    }).catch(() => {
+      res.status(400).end();
+    });;
   });
 
   //PUT /auction/:id -> upacte action, options: descpription,end_date
@@ -510,7 +669,9 @@ module.exports = function routes(app, logger) {
           })
         }
       });
-    });
+    }).catch(() => {
+      res.status(400).end();
+    });;
   });
 
 
@@ -547,34 +708,14 @@ module.exports = function routes(app, logger) {
           });
         }
       });
-    })
-  });
-
-
-  // GET /notifications
-  app.get("/notifications", (req, res) => {
-    jwt.verifyToken(req).then((user) => {
-      const userid = user.id;
-
-      // get all notifications
-      const sql = "SELECT * FROM notification WHERE user_id = ?"
-      pool.query(sql, [userid], (err, rows) => {
-        if (err) {
-          logger.error("Error retrieving notifications: \n", err);
-          res.status(400).send({
-            success: false,
-            msg: "Error retrieving notifications"
-          })
-        } else {
-          res.status(200).send({ success: true, data: rows });
-        }
-      });
+    }).catch(() => {
+      res.status(400).end();
     });
   });
 
 
   // GET /notifications/new
-  app.get("/notifications/new", (req, res) => {
+  app.get("/notifications/", (req, res) => {
     // if there is no issue obtaining a connection, execute query and release connection
     jwt.verifyToken(req).then((user) => {
       const userid = user.id;
@@ -592,11 +733,13 @@ module.exports = function routes(app, logger) {
           res.status(200).send({ success: true, data: rows });
         }
       });
-    });
+    }).catch(() => {
+      res.status(400).end();
+    });;
   });
 
   // PUT /notifications/new
-  app.put("/notifications/new", (req, res) => {
+  app.put("/notifications/", (req, res) => {
     jwt.verifyToken(req).then((user) => {
       const userid = user.id;
       // if there is no issue obtaining a connection, execute query and release connection
@@ -610,34 +753,31 @@ module.exports = function routes(app, logger) {
             msg: "Error updating notifications"
           })
         } else {
-          res.status(200).send({ success: true, data: rows });
+          res.status(200).send({ success: true });
         }
       })
-    })
+    }).catch(() => {
+      res.status(400).end();
+    });
   })
 }
 
-function createAuctionNotification(req, res, list_user_id, text) {
-  pool.getConnection(function (err, connection) {
-    jwt.verifyToken(req).then((user) => {
-      const sql = "INSERT INTO notification (user_id, has_seen, date, text) VALUES (?, 0, now(), ?)";
-      connection.query(sql, [list_user_id, text], (err, results) => {
-        connection.release();
-        if (err) {
-          logger.error("Error creating notification: \n", err);
-          res
-            .status(400)
-            .send({ success: false, msg: "Error creating notification" });
-        }
-      })
-    })
+function createNotification(req, res, user_id, text) {
+  const sql = "INSERT INTO notification (user_id, has_seen, date, text) VALUES (?, 0, now(), ?)";
+  pool.query(sql, [user_id, text], (err, results) => {
+    if (err) {
+      logger.error("Error creating notification: \n", err);
+      res
+        .status(400)
+        .send({ success: false, msg: "Error creating notification" });
+    }
   })
 }
 
-function createTransaction(req, res, purchase_type, purchase_quantity, auction) {
+function createTransactionAndNotification(req, res, purchase_type, purchase_quantity, auction, msg) {
   jwt.verifyToken(req).then((user) => {
     const price = getListingPrice(auction[0].base_price, auction[0].discount_price, auction[0].discount_end, purchase_quantity)
-    const createTransaction = "INSERT INTO transactions ( list_user_id, purchase_user_id, listing_type, quantity, price, product_id) VALUES(?, ?, ?, ?, ?, ?)";
+    const createTransaction = "INSERT INTO transactions ( list_user_id, purchase_user_id, listing_type, quantity, price, product_id, date) VALUES(?, ?, ?, ?, ?, ?, NOW())";
     pool.query(createTransaction, [auction[0].list_user_id, user.id,
       purchase_type, purchase_quantity, price, auction[0].product_id], (err, results) => {
         if (err) {
@@ -646,13 +786,15 @@ function createTransaction(req, res, purchase_type, purchase_quantity, auction) 
             .status(400)
             .send({ success: false, msg: "Error creating transaction" });
         } else {
-          createAuctionNotification(req, res, auction[0].list_user_id, "Your fixed price auction has ended");
+          createNotification(req, res, auction[0].list_user_id, msg);
           res
             .status(200)
             .send({ success: true, msg: "Transaction and notification created", price: price })
         }
       })
-  })
+  }).catch(() => {
+    res.status(400).end();
+  });
 }
 
 function getListingPrice(base_price, discount_price, discount_end, quantity) {

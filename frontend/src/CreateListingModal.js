@@ -1,146 +1,258 @@
-import React, { useState } from "react"
+import React, { useEffect, useState, useContext, useRef } from "react"
+import { CreateProductModal } from './CreateProductModal'
+import { AppContext } from "./AppContext.js";
+import axios from "axios";
+import { capitalize, axiosJWTHeader, validateFixed, validateAuction, dateToISOLikeButLocal } from './utils'
+import { Modal } from 'bootstrap'
 
-function AuctionForm() {
+function AuctionForm({ values, handleInputChange }) {
+
+    const setNow = () => {
+        handleInputChange({ target: { name: "start_date", value: dateToISOLikeButLocal(new Date()) } })
+    }
     return (
         <>
-            <div class="row g-3 mb-3">
-                <div class="col-3">
-                    <label for="start_time" class="col-form-label">Start</label>
+            <div className="row g-3 mb-3">
+                <div className="col-3">
+                    <label htmlFor="start_date" className="col-form-label">Start</label>
                 </div>
-                <div class="col-9">
-                    <input type="datetime-local" id="start_time" class="form-control" />
+                <div className="col-7">
+                    <input type="datetime-local" name="start_date" id="start_date" onChange={handleInputChange} value={values.start_date} className="form-control" />
                 </div>
-            </div>
-            <div class="row g-3 mb-3">
-                <div class="col-3">
-                    <label for="end_time" class="col-form-label">End</label>
-                </div>
-                <div class="col-9">
-                    <input type="datetime-local" id="end_time" class="form-control" />
+                <div className="col-2">
+                    <button type="button" className="btn btn-primary" onClick={() => setNow()} >Now</button>
                 </div>
             </div>
+            <div className="row g-3 mb-3">
+                <div className="col-3">
+                    <label htmlFor="end_date" className="col-form-label">End</label>
+                </div>
 
-            <div class="row g-3 mb-1">
-                <div class="col-3">
-                    <label for="start_bid" class="col-form-label">Starting Bid</label>
+                <div className="col-9">
+                    <input type="datetime-local" name="end_date" id="end_date" onChange={handleInputChange} value={values.end_date} className="form-control" />
                 </div>
-                <div class="col-9">
-                    <div class="input-group mb-3">
-                        <span class="input-group-text" id="basic-addon1">$</span>
-                        <input type="number" id="start_bid" class="form-control" aria-describedby="basic-addon1" />
+            </div >
+
+            <div className="row g-3 mb-1">
+                <div className="col-3">
+                    <label htmlFor="current_bid" className="col-form-label">Starting Bid</label>
+                </div>
+                <div className="col-9">
+                    <div className="input-group mb-3">
+                        <span className="input-group-text" id="basic-addon1">$</span>
+                        <input type="number" name="current_bid" id="current_bid" onChange={handleInputChange} value={values.current_bid} className="form-control" aria-describedby="basic-addon1" />
                     </div>
 
                 </div>
 
-            </div>
-            <div class="row mb-3">
+            </div >
+            <div className="row mb-3">
                 <div className="col-5">
-                    <label for="display_bid" class="col-form-label">Display Leading User?</label>
+                    <label htmlFor="show_user_bid" className="col-form-label">Display Leading User?</label>
                 </div>
-                <div class="col-7">
-                    <div class="form-check form-check-inline col-form-label">
-                        <input class="form-check-input" id="display_bid" type="checkbox" id="gridCheck1" />
+                <div className="col-7">
+                    <div className="form-check form-check-inline col-form-label">
+                        <input className="form-check-input" name="show_user_bid" id="show_user_bid" onChange={handleInputChange} value={values.show_user_bid} type="checkbox" />
                     </div>
                 </div>
-            </div>
+            </div >
         </>
     )
 }
 
-function FixedForm() {
+function FixedForm({ values, handleInputChange }) {
     return (
         <>
-            <div class="row g-3 mb-1">
-                <div class="col-3">
-                    <label for="price_per_unit" class="col-form-label">Price Per Unit</label>
+            <div className="row g-3 mb-1">
+                <div className="col-3">
+                    <label htmlFor="base_price" className="col-form-label">Price Per Unit</label>
                 </div>
-                <div class="col-9">
-                    <div class="input-group mb-3">
-                        <span class="input-group-text" id="basic-addon1">$</span>
-                        <input type="number" id="price_per_unit" class="form-control" aria-describedby="basic-addon1" />
+                <div className="col-9">
+                    <div className="input-group mb-3">
+                        <span className="input-group-text" id="basic-addon1">$</span>
+                        <input type="number" name="base_price" id="base_price" className="form-control" onChange={handleInputChange} value={values.base_price} aria-describedby="basic-addon1" />
                     </div>
 
                 </div>
 
             </div>
-            <div class="row g-3 mb-1">
-                <div class="col-3">
-                    <label for="units" class="col-form-label">Units Avilable</label>
+            <div className="row g-3 mb-1">
+                <div className="col-3">
+                    <label htmlFor="quantity" className="col-form-label">Units Avilable</label>
                 </div>
-                <div class="col-9">
-                    <div class="input-group mb-3">
-                        <input type="number" id="units" class="form-control" aria-describedby="basic-addon1" />
+                <div className="col-9">
+                    <div className="input-group mb-3">
+                        <input type="number" id="quantity" name="quantity" className="form-control" onChange={handleInputChange} value={values.quantity} />
                     </div>
 
                 </div>
 
-            </div>
+            </div >
         </>
     )
 }
 
-export function CreateListingModal() {
+export function CreateListingModal({ show, setShow }) {
     let [listType, setListType] = useState("auction")
 
+    const { baseURL, JWT } = useContext(AppContext);
+
+    let [products, setProducts] = useState([]);
+
+    let [bannerMessage, setBannerMessage] = useState("")
+
+    const defaultValues = {
+        product_id: 0,
+        description: "",
+        start_date: "",
+        end_date: "",
+        current_bid: "",
+        show_user_bid: false,
+        base_price: 0,
+        quantity: 0
+    }
+
+    let [values, setValues] = useState(defaultValues)
+
+    const handleInputChange = (e) => {
+        let { name, value, checked } = e.target;
+        if (e.target.type === "checkbox") {
+            value = checked
+        }
+        setValues({ ...values, [name]: value });
+    };
+
+    const submit = () => {
+        let route = ""
+        let error = false
+        if (listType === "auction") {
+            route = "/auctions"
+            error = validateAuction(values)
+        } else {
+            route = "/fixed"
+            error = validateFixed(values)
+        }
+
+        setBannerMessage(error)
+        if (error) {
+            return
+        }
+
+        axios.post(baseURL + route, values, {
+            headers: axiosJWTHeader(JWT),
+        }).then((r) => {
+            setBannerMessage(r.data.msg)
+            setTimeout(() => {
+                setShow(false)
+            }, 1000)
+            setValues(defaultValues)
+        }).catch((r) => {
+            setBannerMessage(r.response.data.msg)
+        })
+    }
+
+    //On load, get products from API
+    useEffect(() => {
+        axios.get(baseURL + '/products').then((data) => {
+            let elements = []
+            data.data.data.forEach(product => {
+                elements.push(
+                    <option value={product.id} key={product.id}>{capitalize(product.name)}</option>
+                )
+            })
+            setProducts(elements)
+        })
+
+    }, [])
+
+    const [modal, setModal] = useState(null)
+    const modalRef = useRef()
+
+    useEffect(() => {
+        setModal(new Modal(modalRef.current))
+    }, [])
+
+    useEffect(() => {
+        if (modal) {
+            modal.toggle()
+        }
+    }, [show])
+
+    let banner = <></>;
+    if (bannerMessage) {
+        banner = (
+            <div className="alert alert-primary" role="alert">
+                {bannerMessage}
+            </div>
+        );
+    }
     return (
-        <div class="modal fade" id="listingModal" tabindex="-1" aria-labelledby="listingModalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="listingModalLabel">Create Listing</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <form>
-                            <div class="row g-3 mb-3">
-                                <div class="col-3">
-                                    <label for="product" class="col-form-label">Product</label>
-                                </div>
-                                <div class="col-7">
-                                    <input type="password" id="product" class="form-control" />
-                                </div>
-                                <div class="col-2">
-                                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Create</button>
-                                </div>
-                            </div>
-                            <fieldset class="form-group mb-3">
-                                <div class="row">
-                                    <legend class="col-form-label col-sm-3 pt-0">Type</legend>
-                                    <div class="col-sm-9" onChange={(event) => setListType(event.target.value)}>
-                                        <div class="form-check">
-                                            <input class="form-check-input" defaultChecked type="radio" name="gridRadios" id="gridRadios1" value="auction" />
-                                            <label class="form-check-label" for="gridRadios1">
-                                                Auction
-                                            </label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="gridRadios" id="gridRadios2" value="fixed" />
-                                            <label class="form-check-label" for="gridRadios2">
-                                                Fixed Price
-                                            </label>
-                                        </div>
+        <>
+            <CreateProductModal products={products} setProducts={setProducts} />
+
+            <div ref={modalRef} className="modal fade" id="listingModal" tabindex="-1" aria-labelledby="listingModalLabel" aria-hidden="true">
+                <div className="modal-dialog">
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <h5 className="modal-title" id="listingModalLabel">Create Listing</h5>
+                            <button type="button" className="btn-close" onClick={() => setShow(false)}></button>
+                        </div>
+                        <div className="modal-body">
+                            {banner}
+                            <form>
+                                <div className="row g-3 mb-3">
+                                    <div className="col-3">
+                                        <label htmlFor="product" className="col-form-label">Product</label>
+                                    </div>
+                                    <div className="col-7">
+                                        <select autoComplete="true" name="product_id" id="product" className="form-control" value={values.product_id} onChange={handleInputChange}>
+                                            <option value="0">Select Product</option>
+                                            {products}
+                                        </select>
+                                    </div>
+                                    <div className="col-2">
+                                        <button type="button" className="btn btn-primary" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#productModal">Create</button>
                                     </div>
                                 </div>
-                            </fieldset>
-                            {listType == "auction" && <AuctionForm />}
-                            {listType == "fixed" && <FixedForm />}
-                            <div class="row g-3 mb-3">
-                                <div class="col-3">
-                                    <label for="description" class="col-form-label">Description</label>
+                                <fieldset className="form-group mb-3">
+                                    <div className="row">
+                                        <legend className="col-form-label col-sm-3 pt-0">Type</legend>
+                                        <div className="col-sm-9" onChange={(event) => setListType(event.target.value)}>
+                                            <div className="form-check">
+                                                <input className="form-check-input" defaultChecked type="radio" name="gridRadios" id="gridRadios1" value="auction" />
+                                                <label className="form-check-label" htmlFor="gridRadios1">
+                                                    Auction
+                                            </label>
+                                            </div>
+                                            <div className="form-check">
+                                                <input className="form-check-input" type="radio" name="gridRadios" id="gridRadios2" value="fixed" />
+                                                <label className="form-check-label" htmlFor="gridRadios2">
+                                                    Fixed Price
+                                            </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </fieldset>
+                                {listType == "auction" && <AuctionForm handleInputChange={handleInputChange} values={values} />}
+                                {listType == "fixed" && <FixedForm handleInputChange={handleInputChange} values={values} />}
+                                <div className="row g-3 mb-3">
+                                    <div className="col-3">
+                                        <label htmlFor="description" className="col-form-label">Description</label>
+                                    </div>
+                                    <div className="col-9">
+                                        <textarea className="form-control" name="description" id="description" rows="3" onChange={handleInputChange} value={values.description}></textarea>
+                                    </div>
                                 </div>
-                                <div class="col-9">
-                                    <textarea class="form-control" id="description" rows="3"></textarea>
-                                </div>
-                            </div>
 
-                        </form>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-primary">Create</button>
-                    </div>
-                </div>
-            </div>
-        </div>
+                            </form>
+                        </div>
+                        <div className="modal-footer">
+                            <button type="button" className="btn btn-secondary" onClick={() => setShow(false)}>Close</button>
+                            <button type="button" className="btn btn-primary" onClick={() => submit()} >Create</button>
+                        </div>
+                    </div >
+                </div >
+            </div >
+        </>
     )
 }

@@ -1,11 +1,10 @@
 import React, { useEffect } from "react";
 import "./App.css";
 import { Users } from "./Users.js";
-
-import { AuctionList } from "./AuctionList";
-import { ItemListingPage } from './ItemListingPage'
-
-import axios from "axios";
+import { ItemListingPage } from "./ItemListingPage";
+import { UserDashboard } from './UserDashboard'
+import { ListingPage } from './ListingPage'
+import { TransactionPage } from './TransactionPage'
 
 import { AppContext, useProvideAppContext, setupLogin } from "./AppContext.js";
 import {
@@ -32,22 +31,39 @@ export function App() {
 
   return (
     <AppContext.Provider value={context}>
-      <div className="App">
-        <header className="App-header"></header>
+      <div className="container">
 
         <Router>
+          <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+            <div class="container-fluid">
+              <a class="navbar-brand" href="#">Navbar</a>
+              <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                  <li class="nav-item">
+                    <Link className="nav-link" to="/">Dashboard</Link>
+                  </li>
+                  <li class="nav-item">
+                    <Link className="nav-link" to="/listings">Listings</Link>
+                  </li>
+                  <li class="nav-item">
+                    <Link className="nav-link" to="/transactions">Transactions</Link>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </nav>
           <Switch>
             <Route path="/login">
               <Users />
             </Route>
-            <Route path="/listings">
-              <AuctionList />
+            <PrivateRoute path="/listings">
+              <ListingPage />
+            </PrivateRoute>
+            <Route path="/transactions">
+              <TransactionPage />
             </Route>
-            <Route path="/listing">
-              <ItemListingPage />
-            </Route>
-            <PrivateRoute path="/">
-              <p>User dashboard!</p>
+            <PrivateRoute path="/" exact={true}>
+              <UserDashboard />
             </PrivateRoute>
 
           </Switch>
