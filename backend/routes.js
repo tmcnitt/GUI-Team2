@@ -203,12 +203,14 @@ module.exports = function routes(app, logger) {
 
       let mod = "is_finished = 0"
       if (id) {
-        mod += " AND db.fixed_price.list_user_id = ?"
+        //Speical sold out but not 30 days cond
+        mod = " db.fixed_price.list_user_id = ? AND ( DATEDIFF(now(), last_transaction.date) < 30 OR is_finished = 0 ) "
       }
 
       // get the auction
       // Convert the user id into a username for the table
       // Convert the reviews into an average score
+      // Get the last transcation date for the listings page
       const sql = `
           SELECT 
             db.fixed_price.*, 
@@ -252,6 +254,16 @@ module.exports = function routes(app, logger) {
           ON db.users.id = sell_history.list_user_id 
           LEFT JOIN products 
           ON products.id = fixed_price.product_id
+          LEFT JOIN (
+            SELECT 
+              product_id, 
+              max(date) as date
+            FROM 
+              transactions 
+            GROUP BY 
+              product_id
+          ) as last_transaction
+          ON products.id = last_transaction.product_id
           WHERE 
         ` + mod + " GROUP BY db.fixed_price.id HAVING product_name IS NOT NULL";
 
