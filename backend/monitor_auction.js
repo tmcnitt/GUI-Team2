@@ -12,13 +12,23 @@ function check(logger) {
                     logger.error("Error updating auction: \n", err);
                     return
                 }
+
+                const sql3 = "INSERT INTO notification (user_id, has_seen, date, text) VALUES (?, 0, now(), ?)";
+                if (row.list_user_id == row.bid_user_id) {
+                    pool.query(sql3, [row.list_user_id, "Your action ended with no bids :("], (err, results) => {
+                        if (err) {
+                            logger.error("Error creating list user notification: \n", err);
+                        }
+                    })
+                    return
+                }
+
                 const sql2 = "INSERT INTO transactions (list_user_id, purchase_user_id, listing_type, price) VALUES(?, ?, ?, ?)"
                 pool.query(sql2, [row.list_user_id, row.bid_user_id, 1, 1, row.current_bid], (err, result) => {
                     if (err) {
                         logger.error("Error creating transactions: \n", err);
                         return
                     }
-                    const sql3 = "INSERT INTO notification (user_id, has_seen, date, text) VALUES (?, 0, now(), ?)";
                     pool.query(sql3, [row.list_user_id, "Your auction has finished!"], (err, results) => {
                         if (err) {
                             logger.error("Error creating list user notification: \n", err);
