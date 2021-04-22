@@ -23,17 +23,17 @@ export const Fixed = (props) => {
     buy = (
       <div className="container">
         <div className="col-3 mx-auto">
-          <div class="input-group mb-3">
+          <div className="input-group mb-3">
             <input
               type="number"
               max={props.listing.quantity}
               min={1}
-              class="form-control"
+              className="form-control"
               placeholder="Quantity"
               aria-describedby="button-addon2"
             />
             <button
-              class="btn btn-outline-secondary"
+              className="btn btn-outline-secondary"
               type="button"
               id="button-addon2"
             >
@@ -47,11 +47,11 @@ export const Fixed = (props) => {
   return (
     <>
       <h3>
-        Price: <span class="badge bg-success">${props.listing.price}</span>
+        Price: <span className="badge bg-success">${props.listing.price}</span>
       </h3>
       {qty}
       {discount}
-      <div class="d-grid">{buy}</div>
+      <div className="d-grid">{buy}</div>
     </>
   );
 };

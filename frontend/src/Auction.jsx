@@ -22,12 +22,12 @@ export const Auction = (props) => {
     <>
       <h3>
         Current Bid:{" "}
-        <span class="badge bg-success">
+        <span className="badge bg-success">
           ${props.listing.current_bid} {username}
         </span>
       </h3>
       <p className="lead">Time Remaining: {remain}</p>
-      <div class="d-grid">
+      <div className="d-grid">
         <button
           type="button"
           className="btn btn-primary btn-lg btn-block mt-4"

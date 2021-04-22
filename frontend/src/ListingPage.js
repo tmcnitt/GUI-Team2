@@ -20,7 +20,7 @@ export function ListingPage({ selling }) {
         <div className="container mt-5">
             <div className="d-flex justify-content-between">
                 <h1>Listings</h1>
-                <button type="button" class="btn btn-primary" onClick={() => setShow(true)}>
+                <button type="button" className="btn btn-primary" onClick={() => setShow(true)}>
                     Create Listing
                 </button>
             </div>

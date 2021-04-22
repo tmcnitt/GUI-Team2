@@ -190,7 +190,7 @@ export function CreateListingModal({ show, setShow }) {
         <>
             <CreateProductModal products={products} setProducts={setProducts} />
 
-            <div ref={modalRef} className="modal fade modal-fullscreen-md-down" id="listingModal" tabindex="-1" aria-labelledby="listingModalLabel" aria-hidden="true">
+            <div ref={modalRef} className="modal fade modal-fullscreen-md-down" id="listingModal" tabIndex="-1" aria-labelledby="listingModalLabel" aria-hidden="true">
                 <div className="modal-dialog">
                     <div className="modal-content">
                         <div className="modal-header">

@@ -13,63 +13,69 @@ export const SettingsModal = (props) => {
   return (
     <>
       <div
-        class="modal fade"
+        className="modal fade"
         id="listingModal"
-        tabindex="-1"
+        tabIndex="-1"
         aria-labelledby="listingModalLabel"
         aria-hidden="true"
       >
-        <div class="modal-dialog">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="listingModalLabel">
+        <div className="modal-dialog">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title" id="listingModalLabel">
                 Edit Listing
               </h5>
               <button
                 type="button"
-                class="btn-close"
+                className="btn-close"
                 data-bs-dismiss="modal"
                 aria-label="Close"
               ></button>
             </div>
-            <div class="modal-body">
+            <div className="modal-body">
               <form>
-                <div class="row g-3 mb-3">
-                  <div class="col-3">
-                    <label for="product" class="col-form-label">
+                <div className="row g-3 mb-3">
+                  <div className="col-3">
+                    <label for="product" className="col-form-label">
                       Product
                     </label>
                   </div>
-                  <div class="col-9">
-                    <input type="password" id="product" class="form-control" />
+                  <div className="col-9">
+                    <input
+                      type="password"
+                      id="product"
+                      className="form-control"
+                    />
                   </div>
                 </div>
-                <fieldset class="form-group mb-3">
-                  <div class="row">
-                    <legend class="col-form-label col-sm-3 pt-0">Type</legend>
+                <fieldset className="form-group mb-3">
+                  <div className="row">
+                    <legend className="col-form-label col-sm-3 pt-0">
+                      Type
+                    </legend>
 
-                    <div class="form-check">
+                    <div className="form-check">
                       <input
-                        class="form-check-input"
+                        className="form-check-input"
                         defaultChecked
                         type="radio"
                         name="gridRadios"
                         id="gridRadios1"
                         value="auction"
                       />
-                      <label class="form-check-label" for="gridRadios1">
+                      <label className="form-check-label" for="gridRadios1">
                         Auction
                       </label>
                     </div>
-                    <div class="form-check">
+                    <div className="form-check">
                       <input
-                        class="form-check-input"
+                        className="form-check-input"
                         type="radio"
                         name="gridRadios"
                         id="gridRadios2"
                         value="fixed"
                       />
-                      <label class="form-check-label" for="gridRadios2">
+                      <label className="form-check-label" for="gridRadios2">
                         Fixed Price
                       </label>
                     </div>
@@ -77,15 +83,15 @@ export const SettingsModal = (props) => {
                 </fieldset>
 
                 <div>{info}</div>
-                <div class="row g-3 mb-3">
-                  <div class="col-3">
-                    <label for="description" class="col-form-label">
+                <div className="row g-3 mb-3">
+                  <div className="col-3">
+                    <label for="description" className="col-form-label">
                       Description
                     </label>
                   </div>
-                  <div class="col-9">
+                  <div className="col-9">
                     <textarea
-                      class="form-control"
+                      className="form-control"
                       id="description"
                       rows="3"
                     ></textarea>
@@ -93,15 +99,15 @@ export const SettingsModal = (props) => {
                 </div>
               </form>
             </div>
-            <div class="modal-footer">
+            <div className="modal-footer">
               <button
                 type="button"
-                class="btn btn-secondary"
+                className="btn btn-secondary"
                 data-bs-dismiss="modal"
               >
                 Close
               </button>
-              <button type="button" class="btn btn-primary">
+              <button type="button" className="btn btn-primary">
                 Save Changes
               </button>
             </div>
