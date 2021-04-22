@@ -166,7 +166,7 @@ export function AuctionList({ selling, setListing }) {
 
   return (
     <>
-      <div className="col-4-lg col-12">
+      <div className="col-12 col-lg-4">
         <form className="row g-3">
           <div className="col-md-4">
             <label htmlFor="min" className="form-label">Low Price</label>
