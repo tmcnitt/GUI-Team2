@@ -17,6 +17,10 @@ export function useProvideAppContext() {
 
     const [setup, setSetup] = useState(false);
 
+    const signout = () => {
+        localStorage.setItem('jwt', "")
+    }
+
 
     return {
         user,
@@ -28,7 +32,9 @@ export function useProvideAppContext() {
         baseURL,
 
         setup,
-        setSetup
+        setSetup,
+
+        signout
     }
 }
 
