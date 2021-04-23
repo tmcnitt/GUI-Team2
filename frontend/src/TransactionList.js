@@ -63,7 +63,7 @@ export function TransactionList({ transactions }) {
             headers: axiosJWTHeader(JWT)
         }).then((r) => {
             setTrans(r.data.data)
-            setdTable(window.$(table.current).DataTable())
+            setdTable(window.$(table.current).DataTable({ responsive: true }))
         })
     }
 
@@ -121,7 +121,7 @@ export function TransactionList({ transactions }) {
 
     return (
         <>
-            <div className="col-6">
+            <div className="col-12 col-lg-6">
                 <form className="row g-3">
                     <div className="col-md-5">
                         <label htmlFor="min" className="form-label">Start Date</label>

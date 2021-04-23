@@ -92,7 +92,7 @@ function FixedForm({ values, handleInputChange }) {
     )
 }
 
-export function CreateListingModal({ show, setShow }) {
+export function CreateListingModal({ show, setShow, refresh }) {
     let [listType, setListType] = useState("auction")
 
     const { baseURL, JWT } = useContext(AppContext);
@@ -142,6 +142,7 @@ export function CreateListingModal({ show, setShow }) {
             headers: axiosJWTHeader(JWT),
         }).then((r) => {
             setBannerMessage(r.data.msg)
+            refresh()
             setTimeout(() => {
                 setShow(false)
             }, 1000)
@@ -188,9 +189,9 @@ export function CreateListingModal({ show, setShow }) {
     }
     return (
         <>
-            <CreateProductModal products={products} setProducts={setProducts} />
+            <CreateProductModal refresh={refresh} products={products} setProducts={setProducts} />
 
-            <div ref={modalRef} className="modal fade" id="listingModal" tabindex="-1" aria-labelledby="listingModalLabel" aria-hidden="true">
+            <div ref={modalRef} className="modal fade modal-fullscreen-md-down" id="listingModal" tabIndex="-1" aria-labelledby="listingModalLabel" aria-hidden="true">
                 <div className="modal-dialog">
                     <div className="modal-content">
                         <div className="modal-header">

@@ -24,7 +24,7 @@ export function UserDashboard() {
     if (notifications && notifications.length) {
         notifications.forEach((notif) => {
             notifItems.push(
-                <div class="alert alert-primary" role="alert" key={notif.id}>
+                <div className="alert alert-primary" role="alert" key={notif.id}>
                     {notif.text} at {new Date(notif.date).toLocaleString()}
                 </div>
             )

@@ -69,11 +69,11 @@ module.exports = function routes(app, logger) {
 
         bcrypt.compare(password, hash, (err, result) => {
           if (result && !err) {
-            let { username, user_type } = rows[0];
+            let { username, user_type, id } = rows[0];
             const JWT = jwt.makeJWT(rows[0].id);
             res.status(200).send({
               success: true,
-              data: { jwt: JWT, username, user_type },
+              data: { jwt: JWT, username, user_type, id },
             });
           } else {
             logger.error("Error no matching password: \n", err);
@@ -201,14 +201,16 @@ module.exports = function routes(app, logger) {
 
       const id = req.param('id')
 
-      let mod = ""
+      let mod = "is_finished = 0"
       if (id) {
-        mod = " AND db.fixed_price.list_user_id = ?"
+        //Speical sold out but not 30 days cond
+        mod = " db.fixed_price.list_user_id = ? AND ( DATEDIFF(now(), last_transaction.date) < 30 OR is_finished = 0 ) "
       }
 
       // get the auction
       // Convert the user id into a username for the table
       // Convert the reviews into an average score
+      // Get the last transcation date for the listings page
       const sql = `
           SELECT 
             db.fixed_price.*, 
@@ -252,7 +254,17 @@ module.exports = function routes(app, logger) {
           ON db.users.id = sell_history.list_user_id 
           LEFT JOIN products 
           ON products.id = fixed_price.product_id
-          WHERE is_finished = 0
+          LEFT JOIN (
+            SELECT 
+              product_id, 
+              max(date) as date
+            FROM 
+              transactions 
+            GROUP BY 
+              product_id
+          ) as last_transaction
+          ON products.id = last_transaction.product_id
+          WHERE 
         ` + mod + " GROUP BY db.fixed_price.id HAVING product_name IS NOT NULL";
 
       pool.query(sql, [id], (err, rows) => {
@@ -277,27 +289,28 @@ module.exports = function routes(app, logger) {
   })
 
   // PUT /fixed/{id} (update an auction with discount price, description, base price, discount end)
-  app.put('/fixed/', (req, res) => {
+  app.put('/fixed/:id', (req, res) => {
     jwt.verifyToken(req).then((user) => {
       const user_id = user.id;
       const id = req.param('id');
       const auction = "SELECT description, discount_price, base_price, discount_end FROM fixed_price WHERE list_user_id = ? AND id = ?";
 
       pool.query(auction, [user_id, id], (err, results) => {
-        if (err) {
+        if (err || results.length == 0) {
           logger.error("Error retrieving auction information: \n", err);
           res
             .status(400)
             .send({ success: false, msg: "Error retrieving auction information" });
         } else {
+          console.log(results[0])
           const description = req.body.description || results[0].description;
-          const discount_price = req.body.discount_price || results[0].discount_price;
+          const discount_price = req.body.discount_price || results[0].discount_price || undefined;
           const base_price = req.body.base_price || results[0].base_price;
-          const discount_end = req.body.discount_end || results[0].discount_end;
+          const discount_end = req.body.discount_end || results[0].discount_end || undefined;
           const quantity = req.body.quantity || results[0].quantity;
-          const sql = "UPDATE fixed_price SET description = ?, discount_price = ?, base_price = ?, discount_end = ? WHERE list_user_id = ? AND id = ?";
+          const sql = "UPDATE fixed_price SET description = ?, discount_price = ?, base_price = ?, discount_end = ?, quantity = ? WHERE list_user_id = ? AND id = ?";
 
-          pool.query(sql, [description, discount_price, base_price, discount_end, user_id, id], (error, result) => {
+          pool.query(sql, [description, discount_price, base_price, discount_end, quantity, user_id, id], (error, result) => {
             if (error) {
               logger.error("Error updating auction information: \n", err);
               res
@@ -317,7 +330,7 @@ module.exports = function routes(app, logger) {
   })
 
   // DELETE /fixed/{id} (delete selected auction)
-  app.delete('/fixed/', (req, res) => {
+  app.delete('/fixed/:id', (req, res) => {
     jwt.verifyToken(req).then((user) => {
       const user_id = user.id;
       const sql = "DELETE FROM fixed_price WHERE id = ? AND list_user_id = ?";
@@ -340,7 +353,7 @@ module.exports = function routes(app, logger) {
   })
 
   // POST /buy/{id} (user buys auction, update quantity or end listing and create transaction)
-  app.post('/buy/:id', (req, res) => {
+  app.post('/fixed/:id/buy', (req, res) => {
     const getAuction = "SELECT * FROM fixed_price WHERE id = ?";
     pool.query(getAuction, [req.param('id')], (err, auction) => {
       if (err) {
@@ -603,16 +616,18 @@ module.exports = function routes(app, logger) {
   //DELETE -> /auctions/:id -> stop auction
   app.delete('/auctions/:id', async (req, res) => {
     jwt.verifyToken(req).then((user) => {
-      const id = req.body.id;
+      const id = req.param('id');
       const user_id = user.id;
 
-      const get = "SELECT * FROM auction auction.id = ? AND auction.list_user_id = ?"
-      pool.query(get, [id, user_id], (err, result) => {
+      const get = "SELECT * FROM auction WHERE auction.id = ? AND auction.list_user_id = ?"
+      pool.query(get, [id, user_id], (err, results) => {
         if (err) {
           res.status(400).send({
             success: false,
             msg: "Error deleteing auction",
           });
+          logger.error("Error deleting auction: \n", err);
+
           return
         }
 
@@ -625,8 +640,10 @@ module.exports = function routes(app, logger) {
               msg: "Error deleting auctions",
             });
           } else {
-            createNotification(req, res, result[0].bid_user_id, "An auction you were winning was cancelled!")
-            res.status(200).send({ success: true, msg: "Deleted auction", });
+            if (results[0].bid_user_id) {
+              createNotification(req, res, results[0].bid_user_id, "An auction you were winning was cancelled!")
+              res.status(200).send({ success: true, msg: "Deleted auction", });
+            }
           }
         });
       })
