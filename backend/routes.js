@@ -69,11 +69,11 @@ module.exports = function routes(app, logger) {
 
         bcrypt.compare(password, hash, (err, result) => {
           if (result && !err) {
-            let { username, user_type } = rows[0];
+            let { username, user_type, id } = rows[0];
             const JWT = jwt.makeJWT(rows[0].id);
             res.status(200).send({
               success: true,
-              data: { jwt: JWT, username, user_type },
+              data: { jwt: JWT, username, user_type, id },
             });
           } else {
             logger.error("Error no matching password: \n", err);

@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import "./App.css";
 import { Login } from "./Login.js";
 import { Register } from "./Register.js";
@@ -16,7 +16,7 @@ export function Users() {
   const [registerMode, setRegister] = useState(false);
   const [bannerMessage, setBanner] = useState("");
 
-  const { baseURL, setUser, setJWT } = useContext(AppContext);
+  const { baseURL, setUser, setJWT, JWT, user } = useContext(AppContext);
 
   const toggleRegisterMode = () => {
     setBanner("");
@@ -39,9 +39,9 @@ export function Users() {
       .then((res) => {
         //Handle success and update state
         setJWT(res.data.data.jwt)
-        localStorage.setItem("jwt", res.data.data.jwt)
         setUser(res.data.data)
         redirectToHome()
+        localStorage.setItem("jwt", res.data.data.jwt)
       })
       .catch((e) => {
         setBanner(e.response.data.msg);
