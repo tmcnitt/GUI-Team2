@@ -17,16 +17,21 @@ export const Fixed = (props) => {
 
   const { baseURL, JWT, user } = useContext(AppContext);
 
-  let checkout = () => {
+  let checkout = (single) => {
+    let qty = quantity;
+    if (single) {
+      qty = 1
+    }
+
     props.setListing(
       Object.assign({}, props.listing, {
-        quantity: props.listing.quantity - quantity,
+        quantity: props.listing.quantity - qty,
       })
     );
 
     axios.post(
       baseURL + "/fixed/" + `${props.listing.id}` + "/buy",
-      { purchase_quantity: quantity },
+      { purchase_quantity: qty },
       { headers: axiosJWTHeader(JWT) }
     ).then((r) => {
       setTimeout(() => {
@@ -34,6 +39,7 @@ export const Fixed = (props) => {
       }, 5000)
 
       props.setBannerMessage(r.data.msg)
+      props.refresh()
     }).catch((r) => {
 
       setTimeout(() => {
@@ -41,15 +47,22 @@ export const Fixed = (props) => {
       }, 5000)
 
       props.setBannerMessage(r.data.msg)
+      props.refresh()
     });
   };
+
+  if (props.listing.quantity == 0) {
+    setTimeout(() => {
+      props.setListing(null);
+    }, 1000)
+  }
 
   let qty = null;
   let buy = (
     <button
       type="button"
       className="btn btn-primary btn-lg btn-block mt-4"
-      onClick={() => this.onAddClick()}
+      onClick={() => checkout(true)}
     >
       Buy
     </button>

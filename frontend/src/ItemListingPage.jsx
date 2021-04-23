@@ -11,9 +11,9 @@ export function ItemListingPage({ listing, setListing, refresh }) {
 
   let info;
   if (listing.auction_type == "Auction") {
-    info = <Auction listing={listing} setListing={setListing} setBannerMessage={setBannerMessage}></Auction>;
+    info = <Auction listing={listing} setListing={setListing} setBannerMessage={setBannerMessage} refresh={refresh}></Auction>;
   } else {
-    info = <Fixed listing={listing} setListing={setListing} setBannerMessage={setBannerMessage}></Fixed>;
+    info = <Fixed listing={listing} setListing={setListing} setBannerMessage={setBannerMessage} refresh={refresh}></Fixed>;
   }
 
   let { baseURL } = useContext(AppContext);

@@ -36,6 +36,7 @@ export const Auction = (props) => {
       }, 5000)
 
       props.setBannerMessage(r.data.msg)
+      props.refresh()
     }).catch((r) => {
 
       setTimeout(() => {
@@ -43,7 +44,8 @@ export const Auction = (props) => {
       }, 5000)
 
       props.setBannerMessage(r.data.msg)
-    });;
+      props.refresh()
+    });
   };
 
   let username = null;

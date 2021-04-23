@@ -15,7 +15,6 @@ export function ListingPage({ selling }) {
     let [items, setItems] = useState({ 'auctions': [], 'fixed': [] });
 
     const getListings = () => {
-        console.log('refresh called')
         let mod = ""
         if (selling) {
             mod = "/" + user.id
@@ -25,7 +24,6 @@ export function ListingPage({ selling }) {
             axios.get(baseURL + "/auctions" + mod, { headers: axiosJWTHeader(JWT) }),
             axios.get(baseURL + "/fixed" + mod, { headers: axiosJWTHeader(JWT) })
         ]).then(axios.spread((auctions, fixed) => {
-            console.log(auctions.data.data, fixed.data.data)
             setItems({ 'auctions': auctions.data.data, 'fixed': fixed.data.data })
         }))
     }
