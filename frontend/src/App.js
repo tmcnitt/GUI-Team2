@@ -29,6 +29,10 @@ export function App() {
     return <div></div>
   }
 
+  const signout = () => {
+    context.signout()
+  }
+
   return (
     <AppContext.Provider value={context}>
       <div className="container">
@@ -50,6 +54,9 @@ export function App() {
                   </li>
                   <li className="nav-item">
                     <Link className="nav-link" to="/transactions">Transactions</Link>
+                  </li>
+                  <li className="nav-item">
+                    <Link className="nav-link" to="/login" onClick={() => signout()}>Signout</Link>
                   </li>
                 </ul>
               </div>
