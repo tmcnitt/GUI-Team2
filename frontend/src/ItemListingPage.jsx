@@ -7,13 +7,29 @@ import { AppContext } from "./AppContext";
 import { capitalize } from "./utils";
 
 export function ItemListingPage({ listing, setListing, refresh }) {
-  let [bannerMessage, setBannerMessage] = useState("")
+  let [bannerMessage, setBannerMessage] = useState("");
+
+  let { user } = useContext(AppContext);
 
   let info;
   if (listing.auction_type == "Auction") {
-    info = <Auction listing={listing} setListing={setListing} setBannerMessage={setBannerMessage} refresh={refresh}></Auction>;
+    info = (
+      <Auction
+        listing={listing}
+        setListing={setListing}
+        setBannerMessage={setBannerMessage}
+        refresh={refresh}
+      ></Auction>
+    );
   } else {
-    info = <Fixed listing={listing} setListing={setListing} setBannerMessage={setBannerMessage} refresh={refresh}></Fixed>;
+    info = (
+      <Fixed
+        listing={listing}
+        setListing={setListing}
+        setBannerMessage={setBannerMessage}
+        refresh={refresh}
+      ></Fixed>
+    );
   }
 
   let { baseURL } = useContext(AppContext);
@@ -24,6 +40,20 @@ export function ItemListingPage({ listing, setListing, refresh }) {
       <div className="alert alert-primary" role="alert">
         {bannerMessage}
       </div>
+    );
+  }
+
+  let edit = null;
+  if (user.id == listing.list_user_id) {
+    edit = (
+      <button
+        type="button"
+        className="btn btn-secondary m-4 float-end"
+        data-bs-toggle="modal"
+        data-bs-target="#settingsModal"
+      >
+        Edit Listing
+      </button>
     );
   }
 
@@ -38,14 +68,7 @@ export function ItemListingPage({ listing, setListing, refresh }) {
       >
         Back To Listings
       </button>
-      <button
-        type="button"
-        className="btn btn-secondary m-4 float-end"
-        data-bs-toggle="modal"
-        data-bs-target="#settingsModal"
-      >
-        Edit Listing
-      </button>
+      {edit}
       <SettingsModal
         listing={listing}
         refresh={refresh}
