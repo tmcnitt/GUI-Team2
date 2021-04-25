@@ -658,7 +658,7 @@ module.exports = function routes(app, logger) {
       const user_id = user.id;
       const id = req.param('id');
 
-      const sql = "SELECT description, end_date, show_user_bid FROM auction WHERE list_user_id = ? AND id = ?";
+      const sql = "SELECT description, end_date, bid_user_id, show_user_bid FROM auction WHERE list_user_id = ? AND id = ?";
       pool.query(sql, [user_id, id], (err, results) => {
         if (err) {
           logger.error("Error retrieving auction information: \n", err);
@@ -672,23 +672,27 @@ module.exports = function routes(app, logger) {
 
 
           const sql2 = "UPDATE auction SET description = ?, end_date = ?, show_user_bid = ? WHERE list_user_id = ? AND id = ?";
-          pool.query(sql2, [description, end_date, show_user_bid, user_id, id], (error, result) => {
+          pool.query(sql2, [description, end_date, show_user_bid, user_id, id], (error) => {
             if (error) {
               logger.error("Error updating auction information: \n", err);
               res
                 .status(400)
                 .send({ success: false, msg: "Error updating auction information" });
             } else {
-              res
-                .status(200)
-                .send({ succes: true, msg: "Auction updated" })
+              if (results[0].bid_user_id != results[0].list_user_id) {
+                if (end_date != results[0].end_date) {
+                  createNotification(req, res, results[0].bid_user_id, "An auction you were winning was extended!")
+                }
+              }
+
+              res.status(200).send({ success: true, msg: "Auction updated" });
             }
           })
         }
       });
     }).catch(() => {
       res.status(400).end();
-    });;
+    });
   });
 
 
@@ -806,7 +810,7 @@ function createTransactionAndNotification(req, res, purchase_type, purchase_quan
           createNotification(req, res, auction[0].list_user_id, msg);
           res
             .status(200)
-            .send({ success: true, msg: "Transaction and notification created", price: price })
+            .send({ success: true, msg: "Purchase complete", price: price })
         }
       })
   }).catch(() => {
