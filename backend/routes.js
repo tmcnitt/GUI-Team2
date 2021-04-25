@@ -556,8 +556,6 @@ module.exports = function routes(app, logger) {
         db.auction.*,
         db.users.username as list_username,
         AVG(db.review.stars) as avglist_user_score,
-        bought_history.buy_count as list_user_buy_count,
-        sell_history.sell_count as list_user_sell_count,
         products.name as product_name,
         IF(
           auction.show_user_bid OR 
@@ -573,27 +571,7 @@ module.exports = function routes(app, logger) {
       ON db.users.id = db.auction.list_user_id
       LEFT JOIN
         db.review
-      ON db.users.id = db.review.reviewee_id
-      LEFT JOIN (
-        SELECT 
-          purchase_user_id, 
-          COUNT(*) as buy_count
-        FROM 
-          transactions 
-        GROUP BY 
-          purchase_user_id
-      ) as bought_history
-      ON db.users.id = bought_history.purchase_user_id 
-      LEFT JOIN (
-        SELECT 
-          list_user_id, 
-          COUNT(*) as sell_count
-        FROM 
-          transactions 
-        GROUP BY 
-        list_user_id
-      ) as sell_history
-      ON db.users.id = sell_history.list_user_id
+      ON auction.list_user_id = db.review.reviewee_id
       LEFT JOIN products 
       ON products.id = auction.product_id
       LEFT JOIN users as bid_user
