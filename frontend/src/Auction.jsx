@@ -13,6 +13,10 @@ export const Auction = (props) => {
       setRemain(timeLeft(props.listing.end_date));
     }, 1000);
 
+    if (new Date(props.listing.end_date) < new Date()) {
+      props.setListing(null);
+    }
+
     return () => clearTimeout(timer);
   });
 
@@ -26,26 +30,28 @@ export const Auction = (props) => {
       })
     );
 
-    axios.post(
-      baseURL + "/auctions/" + `${props.listing.id}` + "/bid",
-      { new_bid },
-      { headers: axiosJWTHeader(JWT) }
-    ).then((r) => {
-      setTimeout(() => {
-        props.setBannerMessage("")
-      }, 5000)
+    axios
+      .post(
+        baseURL + "/auctions/" + `${props.listing.id}` + "/bid",
+        { new_bid },
+        { headers: axiosJWTHeader(JWT) }
+      )
+      .then((r) => {
+        setTimeout(() => {
+          props.setBannerMessage("");
+        }, 5000);
 
-      props.setBannerMessage(r.data.msg)
-      props.refresh()
-    }).catch((r) => {
+        props.setBannerMessage(r.data.msg);
+        props.refresh();
+      })
+      .catch((r) => {
+        setTimeout(() => {
+          props.setBannerMessage("");
+        }, 5000);
 
-      setTimeout(() => {
-        props.setBannerMessage("")
-      }, 5000)
-
-      props.setBannerMessage(r.data.msg)
-      props.refresh()
-    });
+        props.setBannerMessage(r.data.msg);
+        props.refresh();
+      });
   };
 
   let username = null;

@@ -23,7 +23,7 @@ function check(logger) {
                     return
                 }
 
-                const sql2 = "INSERT INTO transactions (list_user_id, purchase_user_id, listing_type, price) VALUES(?, ?, ?, ?)"
+                const sql2 = "INSERT INTO transactions (list_user_id, purchase_user_id, listing_type, price, date) VALUES(?, ?, ?, ?, NOW())"
                 pool.query(sql2, [row.list_user_id, row.bid_user_id, 1, 1, row.current_bid], (err, result) => {
                     if (err) {
                         logger.error("Error creating transactions: \n", err);
