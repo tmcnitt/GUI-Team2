@@ -23,8 +23,8 @@ function check(logger) {
                     return
                 }
 
-                const sql2 = "INSERT INTO transactions (list_user_id, purchase_user_id, listing_type, price, date) VALUES(?, ?, ?, ?, NOW())"
-                pool.query(sql2, [row.list_user_id, row.bid_user_id, 1, 1, row.current_bid], (err, result) => {
+                const sql2 = "INSERT INTO transactions (list_user_id, purchase_user_id, listing_type, price, date, product_id, quantity) VALUES(?, ?, ?, ?, NOW(), ?, 1)"
+                pool.query(sql2, [row.list_user_id, row.bid_user_id, 1, row.current_bid, row.product_id], (err, result) => {
                     if (err) {
                         logger.error("Error creating transactions: \n", err);
                         return
@@ -47,5 +47,5 @@ function check(logger) {
 }
 
 module.exports.start = function (logger) {
-    setInterval(check, 60 * 1000, logger)
+    setInterval(check, 30 * 1000, logger)
 }
