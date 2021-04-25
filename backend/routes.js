@@ -675,8 +675,6 @@ module.exports = function routes(app, logger) {
           const description = req.body.description || results[0].description;
           const end_date = req.body.end_date || results[0].end_date;
 
-
-
           //True or false, need undefined check
           let show_user_bid = req.body.show_user_bid;
           if (show_user_bid === undefined) {
