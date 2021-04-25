@@ -540,7 +540,7 @@ module.exports = function routes(app, logger) {
   //GET -> /auctions -> get all running auctions
   //GET -> /auctions/:id -> get all running auctions listed by user with id
   app.get('/auctions/:id?', function (req, res) {
-    jwt.verifyToken(req).then(() => {
+    jwt.verifyToken(req).then((user) => {
 
       const id = req.param('id')
       let mod = ""
@@ -559,7 +559,13 @@ module.exports = function routes(app, logger) {
         bought_history.buy_count as list_user_buy_count,
         sell_history.sell_count as list_user_sell_count,
         products.name as product_name,
-        IF(auction.show_user_bid, bid_user.username , "") as bid_username
+        IF(
+          auction.show_user_bid OR 
+          auction.bid_user_id = ? OR 
+          auction.list_user_id = ?, 
+          bid_user.username, 
+          ""
+        ) as bid_username
       FROM 
         db.auction 
       LEFT JOIN 
@@ -591,13 +597,13 @@ module.exports = function routes(app, logger) {
       LEFT JOIN products 
       ON products.id = auction.product_id
       LEFT JOIN users as bid_user
-      ON users.id = auction.bid_user_id
+      ON bid_user.id = auction.bid_user_id
       WHERE 
         is_finished = false AND 
         now() > start_date AND 
         now() < end_date` + mod + "  GROUP BY db.auction.id HAVING product_name IS NOT NULL";
 
-      pool.query(sql, [id], (err, rows) => {
+      pool.query(sql, [user.id, user.id, id], (err, rows) => {
         if (err) {
           logger.error("Error retrieving auctions: \n", err);
           res.status(400).send({
@@ -668,7 +674,12 @@ module.exports = function routes(app, logger) {
         } else {
           const description = req.body.description || results[0].description;
           const end_date = req.body.end_date || results[0].end_date;
-          const show_user_bid = req.body.show_user_bid || results[0].show_user_bid;
+
+          //True or false, need undefined check
+          let show_user_bid = req.body.show_user_bid;
+          if (show_user_bid === undefined) {
+            show_user_bid = results[0].show_user_bid
+          }
 
 
           const sql2 = "UPDATE auction SET description = ?, end_date = ?, show_user_bid = ? WHERE list_user_id = ? AND id = ?";
