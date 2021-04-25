@@ -540,7 +540,7 @@ module.exports = function routes(app, logger) {
   //GET -> /auctions -> get all running auctions
   //GET -> /auctions/:id -> get all running auctions listed by user with id
   app.get('/auctions/:id?', function (req, res) {
-    jwt.verifyToken(req).then(() => {
+    jwt.verifyToken(req).then((user) => {
 
       const id = req.param('id')
       let mod = ""
@@ -556,10 +556,14 @@ module.exports = function routes(app, logger) {
         db.auction.*,
         db.users.username as list_username,
         AVG(db.review.stars) as avglist_user_score,
-        bought_history.buy_count as list_user_buy_count,
-        sell_history.sell_count as list_user_sell_count,
         products.name as product_name,
-        IF(auction.show_user_bid, bid_user.username , "") as bid_username
+        IF(
+          auction.show_user_bid OR 
+          auction.bid_user_id = ? OR 
+          auction.list_user_id = ?, 
+          bid_user.username, 
+          ""
+        ) as bid_username
       FROM 
         db.auction 
       LEFT JOIN 
@@ -567,37 +571,17 @@ module.exports = function routes(app, logger) {
       ON db.users.id = db.auction.list_user_id
       LEFT JOIN
         db.review
-      ON db.users.id = db.review.reviewee_id
-      LEFT JOIN (
-        SELECT 
-          purchase_user_id, 
-          COUNT(*) as buy_count
-        FROM 
-          transactions 
-        GROUP BY 
-          purchase_user_id
-      ) as bought_history
-      ON db.users.id = bought_history.purchase_user_id 
-      LEFT JOIN (
-        SELECT 
-          list_user_id, 
-          COUNT(*) as sell_count
-        FROM 
-          transactions 
-        GROUP BY 
-        list_user_id
-      ) as sell_history
-      ON db.users.id = sell_history.list_user_id
+      ON auction.list_user_id = db.review.reviewee_id
       LEFT JOIN products 
       ON products.id = auction.product_id
       LEFT JOIN users as bid_user
-      ON users.id = auction.bid_user_id
+      ON bid_user.id = auction.bid_user_id
       WHERE 
         is_finished = false AND 
         now() > start_date AND 
         now() < end_date` + mod + "  GROUP BY db.auction.id HAVING product_name IS NOT NULL";
 
-      pool.query(sql, [id], (err, rows) => {
+      pool.query(sql, [user.id, user.id, id], (err, rows) => {
         if (err) {
           logger.error("Error retrieving auctions: \n", err);
           res.status(400).send({
@@ -658,7 +642,7 @@ module.exports = function routes(app, logger) {
       const user_id = user.id;
       const id = req.param('id');
 
-      const sql = "SELECT description, end_date, show_user_bid FROM auction WHERE list_user_id = ? AND id = ?";
+      const sql = "SELECT description, end_date, bid_user_id, show_user_bid FROM auction WHERE list_user_id = ? AND id = ?";
       pool.query(sql, [user_id, id], (err, results) => {
         if (err) {
           logger.error("Error retrieving auction information: \n", err);
@@ -668,27 +652,39 @@ module.exports = function routes(app, logger) {
         } else {
           const description = req.body.description || results[0].description;
           const end_date = req.body.end_date || results[0].end_date;
-          const show_user_bid = req.body.show_user_bid || results[0].show_user_bid;
+
+          //True or false, need undefined check
+          let show_user_bid = req.body.show_user_bid;
+          if (show_user_bid === undefined) {
+            show_user_bid = results[0].show_user_bid
+          }
 
 
           const sql2 = "UPDATE auction SET description = ?, end_date = ?, show_user_bid = ? WHERE list_user_id = ? AND id = ?";
-          pool.query(sql2, [description, end_date, show_user_bid, user_id, id], (error, result) => {
+          pool.query(sql2, [description, end_date, show_user_bid, user_id, id], (error) => {
             if (error) {
               logger.error("Error updating auction information: \n", err);
               res
                 .status(400)
                 .send({ success: false, msg: "Error updating auction information" });
             } else {
-              res
-                .status(200)
-                .send({ succes: true, msg: "Auction updated" })
+              const sql = "SELECT description, end_date, bid_user_id, show_user_bid FROM auction WHERE list_user_id = ? AND id = ?";
+              pool.query(sql, [user_id, id], (err, compare) => {
+                if (results[0].bid_user_id != results[0].list_user_id) {
+                  if (compare[0].end_date.toString() != results[0].end_date.toString()) {
+                    createNotification(req, res, results[0].bid_user_id, "An auction you were winning was extended!")
+                  }
+                }
+              })
+
+              res.status(200).send({ success: true, msg: "Auction updated" });
             }
           })
         }
       });
     }).catch(() => {
       res.status(400).end();
-    });;
+    });
   });
 
 
@@ -806,7 +802,7 @@ function createTransactionAndNotification(req, res, purchase_type, purchase_quan
           createNotification(req, res, auction[0].list_user_id, msg);
           res
             .status(200)
-            .send({ success: true, msg: "Transaction and notification created", price: price })
+            .send({ success: true, msg: "Purchase complete", price: price })
         }
       })
   }).catch(() => {

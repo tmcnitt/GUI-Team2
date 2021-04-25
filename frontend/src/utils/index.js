@@ -73,7 +73,11 @@ export const timeLeft = (end) => {
     var minutes = Math.floor(delta / 60) % 60;
     delta -= minutes * 60;
 
-    var seconds = (delta % 60).toFixed(0);
+    var seconds = (delta % 60)
 
-    return `${days} Days ${hours}:${minutes}:${seconds}`
+    const format = (num) => {
+        return num.toLocaleString("en-US", { minimumIntegerDigits: 2, maximumFractionDigits: 0 });
+    }
+
+    return `${days} Days ${format(hours)}:${format(minutes)}:${format(seconds)}`
 }

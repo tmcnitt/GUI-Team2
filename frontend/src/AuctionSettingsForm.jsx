@@ -67,7 +67,7 @@ export function AuctionSettingsForm({ values, handleInputChange }) {
               name="show_user_bid"
               id="show_user_bid"
               onChange={handleInputChange}
-              value={values.show_user_bid}
+              checked={values.show_user_bid}
               type="checkbox"
             />
           </div>
