@@ -675,6 +675,8 @@ module.exports = function routes(app, logger) {
           const description = req.body.description || results[0].description;
           const end_date = req.body.end_date || results[0].end_date;
 
+
+
           //True or false, need undefined check
           let show_user_bid = req.body.show_user_bid;
           if (show_user_bid === undefined) {
@@ -690,11 +692,14 @@ module.exports = function routes(app, logger) {
                 .status(400)
                 .send({ success: false, msg: "Error updating auction information" });
             } else {
-              if (results[0].bid_user_id != results[0].list_user_id) {
-                if (end_date != results[0].end_date) {
-                  createNotification(req, res, results[0].bid_user_id, "An auction you were winning was extended!")
+              const sql = "SELECT description, end_date, bid_user_id, show_user_bid FROM auction WHERE list_user_id = ? AND id = ?";
+              pool.query(sql, [user_id, id], (err, compare) => {
+                if (results[0].bid_user_id != results[0].list_user_id) {
+                  if (compare[0].end_date.toString() != results[0].end_date.toString()) {
+                    createNotification(req, res, results[0].bid_user_id, "An auction you were winning was extended!")
+                  }
                 }
-              }
+              })
 
               res.status(200).send({ success: true, msg: "Auction updated" });
             }
