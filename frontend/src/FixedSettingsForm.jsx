@@ -47,12 +47,12 @@ export function FixedSettingsForm({ values, handleInputChange }) {
             Now
           </button>
         </div>
-        <div className="col-3">
+        <div className="col-5">
           <label htmlFor="discount_price" className="col-form-label">
             Discount Price
           </label>
         </div>
-        <div className="col-9">
+        <div className="col-7">
           <div className="input-group mb-3">
             <span className="input-group-text" id="basic-addon1">
               $
@@ -68,12 +68,34 @@ export function FixedSettingsForm({ values, handleInputChange }) {
             />
           </div>
         </div>
-        <div className="col-3">
+        <div className="col-5">
+          <label htmlFor="base_price" className="col-form-label">
+            Discounted Total Cost
+          </label>
+        </div>
+        <div className="col-7">
+          <div className="input-group mb-3">
+            <span className="input-group-text" id="basic-addon1">
+              $
+            </span>
+            <input
+              type="number"
+              name="base_price"
+              id="base_price"
+              className="form-control"
+              value={values.discount_price * values.quantity}
+              aria-describedby="basic-addon1"
+              disabled={"true"}
+            />
+          </div>
+        </div>
+        <hr />
+        <div className="col-5">
           <label htmlFor="base_price" className="col-form-label">
             Price Per Unit
           </label>
         </div>
-        <div className="col-9">
+        <div className="col-7">
           <div className="input-group mb-3">
             <span className="input-group-text" id="basic-addon1">
               $
@@ -91,12 +113,12 @@ export function FixedSettingsForm({ values, handleInputChange }) {
         </div>
       </div>
       <div className="row g-3 mb-1">
-        <div className="col-3">
+        <div className="col-5">
           <label htmlFor="quantity" className="col-form-label">
             Units Available
           </label>
         </div>
-        <div className="col-9">
+        <div className="col-7">
           <div className="input-group mb-3">
             <input
               type="number"
@@ -110,12 +132,12 @@ export function FixedSettingsForm({ values, handleInputChange }) {
         </div>
       </div>
       <div className="row g-3 mb-1">
-        <div className="col-3">
+        <div className="col-5">
           <label htmlFor="quantity" className="col-form-label">
             Total Cost
           </label>
         </div>
-        <div className="col-9">
+        <div className="col-7">
           <div className="input-group mb-3">
             <span className="input-group-text" id="basic-addon1">
               $
