@@ -51,7 +51,7 @@ export const Fixed = (props) => {
     });
   };
 
-  if (props.listing.quantity == 0) {
+  if (props.listing.quantity == 0 && user.id != props.listing.list_user_id) {
     setTimeout(() => {
       props.setListing(null);
     }, 1000)

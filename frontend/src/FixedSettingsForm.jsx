@@ -11,6 +11,15 @@ export function FixedSettingsForm({ values, handleInputChange }) {
     });
   };
 
+  const setTotalPrice = (e) => {
+    handleInputChange({
+      target: {
+        name: 'base_price',
+        value: e.target.value / values.quantity,
+      },
+    });
+  }
+
   return (
     <>
       <div className="row g-3 mb-3">
@@ -84,7 +93,7 @@ export function FixedSettingsForm({ values, handleInputChange }) {
       <div className="row g-3 mb-1">
         <div className="col-3">
           <label htmlFor="quantity" className="col-form-label">
-            Units Avilable
+            Units Available
           </label>
         </div>
         <div className="col-9">
@@ -96,6 +105,29 @@ export function FixedSettingsForm({ values, handleInputChange }) {
               className="form-control"
               onChange={handleInputChange}
               value={values.quantity}
+            />
+          </div>
+        </div>
+      </div>
+      <div className="row g-3 mb-1">
+        <div className="col-3">
+          <label htmlFor="quantity" className="col-form-label">
+            Total Cost
+          </label>
+        </div>
+        <div className="col-9">
+          <div className="input-group mb-3">
+            <span className="input-group-text" id="basic-addon1">
+              $
+            </span>
+            <input
+              type="number"
+              id="quantity"
+              name="quantity"
+              className="form-control"
+              onChange={setTotalPrice}
+              value={values.quantity * values.base_price}
+              aria-describedby="basic-addon1"
             />
           </div>
         </div>
