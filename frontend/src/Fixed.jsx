@@ -4,15 +4,6 @@ import { AppContext } from "./AppContext.js";
 import { axiosJWTHeader } from "./utils";
 
 export const Fixed = (props) => {
-  let discount = null;
-  if (props.listing.discount_end) {
-    if (new Date(props.listing.discount_end) > new Date()) {
-      discount = (
-        <p className="lead">Discount End Date: {props.listing.discount_end}</p>
-      );
-    }
-  }
-
   let [quantity, setQuantity] = useState(0);
 
   const { baseURL, JWT, user } = useContext(AppContext);
@@ -72,6 +63,11 @@ export const Fixed = (props) => {
     buy = (
       <div className="container">
         <div className="col-3 mx-auto">
+          <div className="mb-0 text-center">
+            {qty}
+          </div>
+        </div>
+        <div className="col-3 mx-auto">
           <div className="input-group mb-3">
             <input
               type="number"
@@ -93,22 +89,16 @@ export const Fixed = (props) => {
             </button>
           </div>
         </div>
+
       </div>
     );
   }
 
-  let price = props.listing.base_price;
-  if (new Date() < new Date(props.listing.discount_end)) {
-    price = props.listing.discount_price;
-  }
+
 
   return (
     <>
-      <h3>
-        Price: <span className="badge bg-success">${price}</span>
-      </h3>
-      {qty}
-      {discount}
+
       <div className="d-grid">{buy}</div>
     </>
   );

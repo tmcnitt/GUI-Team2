@@ -12,6 +12,8 @@ export function ItemListingPage({ listing, setListing, refresh }) {
   let { user } = useContext(AppContext);
 
   let info;
+  let price;
+  let discount;
   if (listing.auction_type == "Auction") {
     info = (
       <Auction
@@ -20,7 +22,23 @@ export function ItemListingPage({ listing, setListing, refresh }) {
         setBannerMessage={setBannerMessage}
         refresh={refresh}
       ></Auction>
+
     );
+
+    //Get the current winner
+    let username = null;
+    if (listing.bid_username) {
+      username = <>by {listing.bid_username}</>;
+    }
+
+    //Set the info
+    price = (<h3>
+      Current Bid:{" "}
+      <span className="badge bg-success">
+        ${listing.current_bid} {username}
+      </span>
+    </h3>)
+
   } else {
     info = (
       <Fixed
@@ -30,6 +48,29 @@ export function ItemListingPage({ listing, setListing, refresh }) {
         refresh={refresh}
       ></Fixed>
     );
+
+    //Get the current rice
+    price = listing.base_price;
+    if (new Date() < new Date(listing.discount_end)) {
+      price = listing.discount_price;
+    }
+
+    //Acount for discount
+    if (listing.discount_end) {
+      if (new Date(listing.discount_end) > new Date()) {
+        discount = (
+          <p className="lead">Discount End Date: {listing.discount_end}</p>
+        );
+      }
+    }
+
+    price = (<>
+      <h3>
+        Price: <span className="badge bg-success">${price}</span>
+      </h3>
+
+      { discount}</>
+    )
   }
 
   let { baseURL } = useContext(AppContext);
@@ -60,8 +101,26 @@ export function ItemListingPage({ listing, setListing, refresh }) {
   let rating = null;
   if (listing.avglist_user_score) {
     rating = (
-      <p className="lead">Seller Average Rating: {listing.avglist_user_score.toFixed(1)}/5</p>
+      <p className="">Seller Average Rating: {listing.avglist_user_score.toFixed(1)}/5</p>
+    )
+  }
 
+  let reviews = [];
+  if (listing.best_review_rating) {
+    reviews.push(
+      <>
+        <p className="">Best Rating:{""} {listing.best_review_rating}/5</p>
+        <p className="">Best review:{""} {listing.best_review_review.slice(0, 40)}</p>
+      </>
+    )
+  }
+
+  if (listing.worst_review_rating) {
+    reviews.push(
+      <>
+        <p className="">Worst Rating:{""} {listing.worst_review_rating}/5</p>
+        <p className="">Worst review:{""} {listing.worst_review_review.slice(0, 40)}</p>
+      </>
     )
   }
 
@@ -84,19 +143,32 @@ export function ItemListingPage({ listing, setListing, refresh }) {
         reset={() => setListing(null)}
       />
       <div className="jumbotron container bg-light mt-5">
-        <img
-          className="float-start m-3"
-          src={baseURL + "/products/" + listing.product_id}
-        ></img>
-        <div className="mx-auto">
-          <h1 className="display-4">{capitalize(listing.product_name)}</h1>
-          {rating}
-          <h1>
-            <span className="badge badge-success badge-lg"></span>
-          </h1>
-          <p className="lead">{capitalize(listing.description)}</p>
-          <div>{info}</div>
-          <div className="float-end"></div>
+        <div className="container mt-3">
+          <div className="row">
+            <div className="col-4">
+              <img
+                src={baseURL + "/products/" + listing.product_id}
+              ></img>
+            </div>
+            <div className="col-4">
+              <h1 className="display-4">{capitalize(listing.product_name)}</h1>
+              <h1>
+                <span className="badge badge-success badge-lg"></span>
+              </h1>
+              <p className="lead">{capitalize(listing.description)}</p>
+              {price}
+              <div>
+              </div>
+            </div>
+            <div className="col-4">
+              <h5>Seller Information</h5>
+              {rating}
+              {reviews}
+            </div>
+          </div>
+          <div className="row">
+            {info}
+          </div>
         </div>
       </div>
     </>

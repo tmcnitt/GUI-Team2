@@ -54,21 +54,11 @@ export const Auction = (props) => {
       });
   };
 
-  let username = null;
-  if (props.listing.bid_username) {
-    username = <>by {props.listing.bid_username}</>;
-  }
 
   return (
     <>
-      <h3>
-        Current Bid:{" "}
-        <span className="badge bg-success">
-          ${props.listing.current_bid} {username}
-        </span>
-      </h3>
-      <p className="lead">Time Remaining: {remain}</p>
       <div className="d-grid">
+        <p className="lead text-center">Time Remaining: {remain}</p>
         <button
           type="button"
           className="btn btn-primary btn-lg btn-block mt-4"

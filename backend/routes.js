@@ -223,7 +223,12 @@ module.exports = function routes(app, logger) {
             AVG(db.review.stars) as avglist_user_score,
             bought_history.buy_count as list_user_buy_count,
             sell_history.sell_count as list_user_sell_count,
-            products.name as product_name
+            products.name as product_name,
+            best_review.stars as best_review_rating,
+            best_review.msg as best_review_review,
+    
+            worst_review.stars as worst_review_rating,
+            worst_review.msg as worst_review_review
           FROM 
             db.fixed_price
           LEFT JOIN 
@@ -231,7 +236,7 @@ module.exports = function routes(app, logger) {
           ON db.users.id = db.fixed_price.list_user_id
           LEFT JOIN
             db.review
-          ON db.users.id = db.review.reviewee_id
+          ON db.fixed_price.list_user_id = db.review.reviewee_id
           LEFT JOIN (
             SELECT 
               purchase_user_id, 
@@ -241,7 +246,7 @@ module.exports = function routes(app, logger) {
             GROUP BY 
               purchase_user_id
           ) as bought_history
-          ON db.users.id = bought_history.purchase_user_id 
+          ON db.fixed_price.list_user_id = bought_history.purchase_user_id 
           LEFT JOIN (
             SELECT 
               list_user_id, 
@@ -251,7 +256,7 @@ module.exports = function routes(app, logger) {
             GROUP BY 
             list_user_id
           ) as sell_history
-          ON db.users.id = sell_history.list_user_id 
+          ON db.fixed_price.list_user_id = sell_history.list_user_id 
           LEFT JOIN products 
           ON products.id = fixed_price.product_id
           LEFT JOIN (
@@ -264,6 +269,12 @@ module.exports = function routes(app, logger) {
               product_id
           ) as last_transaction
           ON products.id = last_transaction.product_id
+          LEFT JOIN
+            (SELECT reviewee_id, max(stars) as stars,msg FROM review GROUP BY reviewee_id ) as best_review
+          ON db.fixed_price.list_user_id = best_review.reviewee_id
+          LEFT JOIN
+            (SELECT reviewee_id, min(stars) as stars,msg FROM review GROUP BY reviewee_id ) as worst_review
+          ON db.fixed_price.list_user_id = best_review.reviewee_id
           WHERE 
         ` + mod + " GROUP BY db.fixed_price.id HAVING product_name IS NOT NULL";
 
@@ -563,7 +574,13 @@ module.exports = function routes(app, logger) {
           auction.list_user_id = ?, 
           bid_user.username, 
           ""
-        ) as bid_username
+        ) as bid_username,
+
+        best_review.stars as best_review_rating,
+        best_review.msg as best_review_review,
+
+        worst_review.stars as worst_review_rating,
+        worst_review.msg as worst_review_review
       FROM 
         db.auction 
       LEFT JOIN 
@@ -572,6 +589,14 @@ module.exports = function routes(app, logger) {
       LEFT JOIN
         db.review
       ON auction.list_user_id = db.review.reviewee_id
+
+      LEFT JOIN
+        (SELECT reviewee_id, max(stars) as stars,msg FROM review GROUP BY reviewee_id ) as best_review
+      ON auction.list_user_id = best_review.reviewee_id
+
+      LEFT JOIN
+        (SELECT reviewee_id, min(stars) as stars,msg FROM review GROUP BY reviewee_id ) as worst_review
+      ON auction.list_user_id = best_review.reviewee_id
       LEFT JOIN products 
       ON products.id = auction.product_id
       LEFT JOIN users as bid_user
