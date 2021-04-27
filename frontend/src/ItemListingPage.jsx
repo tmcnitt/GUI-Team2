@@ -57,6 +57,14 @@ export function ItemListingPage({ listing, setListing, refresh }) {
     );
   }
 
+  let rating = null;
+  if (listing.avglist_user_score) {
+    rating = (
+      <p className="lead">Seller Average Rating: {listing.avglist_user_score.toFixed(1)}/5</p>
+
+    )
+  }
+
   // {listing.item.price}
   return (
     <>
@@ -82,6 +90,7 @@ export function ItemListingPage({ listing, setListing, refresh }) {
         ></img>
         <div className="mx-auto">
           <h1 className="display-4">{capitalize(listing.product_name)}</h1>
+          {rating}
           <h1>
             <span className="badge badge-success badge-lg"></span>
           </h1>
