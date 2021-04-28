@@ -44,7 +44,11 @@ export function Users() {
         localStorage.setItem("jwt", res.data.data.jwt)
       })
       .catch((e) => {
-        setBanner(e.response.data.msg);
+        if (e.response) {
+          setBanner(e.response.data.msg);
+        } else {
+          setBanner("We had an issue connecting to the server");
+        }
       });
   };
 
@@ -61,7 +65,11 @@ export function Users() {
         redirectToHome()
       })
       .catch((e) => {
-        setBanner(e.response.data.msg);
+        if (e.response) {
+          setBanner(e.response.data.msg);
+        } else {
+          setBanner("We had an issue connecting to the server");
+        }
       });
   };
 
