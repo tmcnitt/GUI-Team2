@@ -45,7 +45,7 @@ module.exports = function routes(app, logger) {
           const JWT = jwt.makeJWT(result.insertId);
           res.status(200).send({
             success: true,
-            data: { jwt: JWT },
+            data: { jwt: JWT, username, user_type: req.body.user_type, id: result.insertId },
           });
         });
       });
