@@ -13,7 +13,6 @@ export function ItemListingPage({ listing, setListing, refresh }) {
 
   let info;
   let price;
-  let discount;
   if (listing.auction_type == "Auction") {
     info = (
       <Auction
@@ -55,21 +54,11 @@ export function ItemListingPage({ listing, setListing, refresh }) {
       price = listing.discount_price;
     }
 
-    //Acount for discount
-    if (listing.discount_end) {
-      if (new Date(listing.discount_end) > new Date()) {
-        discount = (
-          <p className="lead">Discount End Date: {listing.discount_end}</p>
-        );
-      }
-    }
-
     price = (<>
       <h3>
         Price: <span className="badge bg-success">${price}</span>
       </h3>
-
-      { discount}</>
+    </>
     )
   }
 
@@ -147,6 +136,7 @@ export function ItemListingPage({ listing, setListing, refresh }) {
           <div className="row">
             <div className="col-4">
               <img
+                className="img-thumbnail"
                 src={baseURL + "/products/" + listing.product_id}
               ></img>
             </div>
