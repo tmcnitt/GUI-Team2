@@ -170,7 +170,7 @@ export function CreateListingModal({ show, setShow, refresh }) {
     const modalRef = useRef()
 
     useEffect(() => {
-        setModal(new Modal(modalRef.current))
+        setModal(new Modal(modalRef.current, { backdrop: 'static' }))
     }, [])
 
     useEffect(() => {
@@ -191,7 +191,7 @@ export function CreateListingModal({ show, setShow, refresh }) {
         <>
             <CreateProductModal refresh={refresh} products={products} setProducts={setProducts} setShow={setShow} />
 
-            <div ref={modalRef} className="modal fade modal-fullscreen-md-down" id="listingModal" tabIndex="-1" aria-labelledby="listingModalLabel" aria-hidden="true">
+            <div ref={modalRef} className="modal fade modal-fullscreen-md-down" data-backdrop="static" id="listingModal" tabIndex="-1" aria-labelledby="listingModalLabel" aria-hidden="true">
                 <div className="modal-dialog">
                     <div className="modal-content">
                         <div className="modal-header">
