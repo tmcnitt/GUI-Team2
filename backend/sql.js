@@ -70,7 +70,7 @@ module.exports.GET_AUCTIONS = `
                 reviewee_id 
             )
             as worst_review 
-            ON auction.list_user_id = best_review.reviewee_id 
+            ON auction.list_user_id = worst_review.reviewee_id 
         LEFT JOIN
             products 
             ON products.id = auction.product_id 
@@ -238,7 +238,7 @@ module.exports.GET_FIXED = `
                 reviewee_id 
         )
         as worst_review 
-        ON db.fixed_price.list_user_id = best_review.reviewee_id 
+        ON db.fixed_price.list_user_id = worst_review.reviewee_id 
         LEFT JOIN
         (
             SELECT
