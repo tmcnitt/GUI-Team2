@@ -54,18 +54,25 @@ export const Auction = (props) => {
       });
   };
 
+  let buy = (
+    <button
+      type="button"
+      className="btn btn-primary btn-lg btn-block mt-4"
+      onClick={() => onBidButton(props.listing.current_bid + 1)}
+    >
+      Bid
+    </button>
+  );
+
+  if (props.listing.list_user_id == user.id) {
+    buy = null;
+  }
 
   return (
     <>
       <div className="d-grid">
         <p className="lead text-center">Time Remaining: {remain}</p>
-        <button
-          type="button"
-          className="btn btn-primary btn-lg btn-block mt-4"
-          onClick={() => onBidButton(props.listing.current_bid + 1)}
-        >
-          Bid
-        </button>
+        {buy}
       </div>
     </>
   );

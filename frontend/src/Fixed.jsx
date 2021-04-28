@@ -1,5 +1,5 @@
 import React, { useState, useContext } from "react";
-import axios from "axios"
+import axios from "axios";
 import { AppContext } from "./AppContext.js";
 import { axiosJWTHeader } from "./utils";
 
@@ -11,7 +11,7 @@ export const Fixed = (props) => {
   let checkout = (single) => {
     let qty = quantity;
     if (single) {
-      qty = 1
+      qty = 1;
     }
 
     props.setListing(
@@ -20,32 +20,34 @@ export const Fixed = (props) => {
       })
     );
 
-    axios.post(
-      baseURL + "/fixed/" + `${props.listing.id}` + "/buy",
-      { purchase_quantity: qty },
-      { headers: axiosJWTHeader(JWT) }
-    ).then((r) => {
-      setTimeout(() => {
-        props.setBannerMessage("")
-      }, 5000)
+    axios
+      .post(
+        baseURL + "/fixed/" + `${props.listing.id}` + "/buy",
+        { purchase_quantity: qty },
+        { headers: axiosJWTHeader(JWT) }
+      )
+      .then((r) => {
+        setTimeout(() => {
+          props.setBannerMessage("");
+        }, 5000);
 
-      props.setBannerMessage(r.data.msg)
-      props.refresh()
-    }).catch((r) => {
+        props.setBannerMessage(r.data.msg);
+        props.refresh();
+      })
+      .catch((r) => {
+        setTimeout(() => {
+          props.setBannerMessage("");
+        }, 5000);
 
-      setTimeout(() => {
-        props.setBannerMessage("")
-      }, 5000)
-
-      props.setBannerMessage(r.data.msg)
-      props.refresh()
-    });
+        props.setBannerMessage(r.data.msg);
+        props.refresh();
+      });
   };
 
   if (props.listing.quantity == 0 && user.id != props.listing.list_user_id) {
     setTimeout(() => {
       props.setListing(null);
-    }, 1000)
+    }, 1000);
   }
 
   let qty = null;
@@ -58,14 +60,13 @@ export const Fixed = (props) => {
       Buy
     </button>
   );
+
   if (props.listing.quantity > 1) {
     qty = <p className="lead">Quantity Left: {props.listing.quantity}</p>;
     buy = (
       <div className="container">
         <div className="col-3 mx-auto">
-          <div className="mb-0 text-center">
-            {qty}
-          </div>
+          <div className="mb-0 text-center">{qty}</div>
         </div>
         <div className="col-3 mx-auto">
           <div className="input-group mb-3">
@@ -89,16 +90,16 @@ export const Fixed = (props) => {
             </button>
           </div>
         </div>
-
       </div>
     );
   }
 
-
+  if (props.listing.list_user_id == user.id) {
+    buy = null;
+  }
 
   return (
     <>
-
       <div className="d-grid">{buy}</div>
     </>
   );
