@@ -104,7 +104,7 @@ export function ItemListingPage({ listing, setListing, refresh }) {
     )
   }
 
-  if (listing.worst_review_rating) {
+  if (listing.worst_review_rating && listing.worst_review_rating != listing.best_review_rating) {
     reviews.push(
       <>
         <p className="">Worst Rating:{""} {listing.worst_review_rating}/5</p>
