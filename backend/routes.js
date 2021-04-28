@@ -271,10 +271,25 @@ module.exports = function routes(app, logger) {
           ) as last_transaction
           ON products.id = last_transaction.product_id
           LEFT JOIN
-            (SELECT reviewee_id, max(stars) as stars,msg FROM review GROUP BY reviewee_id ) as best_review
+            (  SELECT a.reviewee_id, a.stars, a.msg 
+              FROM review a
+              INNER JOIN (
+                SELECT reviewee_id, MAX(stars) as stars
+                FROM review
+                GROUP BY reviewee_id
+              ) b ON a.stars = b.stars
+              GROUP BY reviewee_id
+              ) as best_review
           ON db.fixed_price.list_user_id = best_review.reviewee_id
           LEFT JOIN
-            (SELECT reviewee_id, min(stars) as stars,msg FROM review GROUP BY reviewee_id ) as worst_review
+            (SELECT a.reviewee_id, a.stars, a.msg 
+              FROM review a
+              INNER JOIN (
+                SELECT reviewee_id, MIN(stars) as stars
+                FROM review
+                GROUP BY reviewee_id
+              ) b ON a.stars = b.stars
+              GROUP BY reviewee_id ) as worst_review
           ON db.fixed_price.list_user_id = best_review.reviewee_id
 
           LEFT JOIN 
@@ -599,11 +614,29 @@ module.exports = function routes(app, logger) {
       ON auction.list_user_id = db.review.reviewee_id
 
       LEFT JOIN
-        (SELECT reviewee_id, max(stars) as stars,msg FROM review GROUP BY reviewee_id ) as best_review
+        (
+          SELECT a.reviewee_id, a.stars, a.msg 
+          FROM review a
+          INNER JOIN (
+            SELECT reviewee_id, MAX(stars) as stars
+            FROM review
+            GROUP BY reviewee_id
+          ) b ON a.stars = b.stars
+          GROUP BY reviewee_id
+       ) as best_review
       ON auction.list_user_id = best_review.reviewee_id
 
       LEFT JOIN
-        (SELECT reviewee_id, min(stars) as stars,msg FROM review GROUP BY reviewee_id ) as worst_review
+        (
+          SELECT a.reviewee_id, a.stars, a.msg 
+          FROM review a
+          INNER JOIN (
+            SELECT reviewee_id, MIN(stars) as stars
+            FROM review
+            GROUP BY reviewee_id
+          ) b ON a.stars = b.stars
+          GROUP BY reviewee_id
+        ) as worst_review
       ON auction.list_user_id = best_review.reviewee_id
       LEFT JOIN products 
       ON products.id = auction.product_id
