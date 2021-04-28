@@ -51,6 +51,11 @@ export function AuctionItem(props) {
     props.setListing(props.listing)
   }
 
+  let avg_sale_price = "NA"
+  if (props.listing.avg_sell_price) {
+    avg_sale_price = <>${props.listing.avg_sell_price.toFixed(1)} </>
+  }
+
   return (
     <tr className="itemRow" onClick={(e) => handleRowClick(e)}>
       <th scope="row">{capitalize(props.listing.product_name)}</th>
@@ -60,6 +65,7 @@ export function AuctionItem(props) {
       <td>{props.listing.end_date ? relativeTime(props.listing.end_date) : "-"}</td>
       <td>{props.listing.list_username}</td>
       <td>{reviews}</td>
+      <td>{avg_sale_price}</td>
       <td>{compare.toString()}</td>
       <td>{compareBtn}</td>
     </tr>
@@ -93,7 +99,7 @@ export function AuctionList({ setListing, listings }) {
       dom: 'Bfrtip',
       columnDefs: [
         {
-          "targets": [7],
+          "targets": [8],
           "visible": false,
           "searchable": true,
         }
@@ -104,9 +110,9 @@ export function AuctionList({ setListing, listings }) {
           action: function (e, dt, node, config) {
             filter = !filter
             if (filter) {
-              dt.column(7).search("1").draw()
+              dt.column(8).search("1").draw()
             } else {
-              dt.column(7).search("").draw()
+              dt.column(8).search("").draw()
             }
           }
         }
@@ -202,6 +208,7 @@ export function AuctionList({ setListing, listings }) {
               <th scope="col">Ends</th>
               <th scope="col">Seller</th>
               <th scope="col">Seller Reviews</th>
+              <th scope="col">Avg Sale Price</th>
               <th scope="col">Hidden</th>
               <th scope="col">Compare</th>
             </tr>

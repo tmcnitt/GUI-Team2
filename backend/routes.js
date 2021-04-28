@@ -228,7 +228,8 @@ module.exports = function routes(app, logger) {
             best_review.msg as best_review_review,
     
             worst_review.stars as worst_review_rating,
-            worst_review.msg as worst_review_review
+            worst_review.msg as worst_review_review,
+            prices.price as avg_sell_price
           FROM 
             db.fixed_price
           LEFT JOIN 
@@ -275,6 +276,11 @@ module.exports = function routes(app, logger) {
           LEFT JOIN
             (SELECT reviewee_id, min(stars) as stars,msg FROM review GROUP BY reviewee_id ) as worst_review
           ON db.fixed_price.list_user_id = best_review.reviewee_id
+
+          LEFT JOIN 
+            (SELECT product_id, AVG(price / quantity) as price FROM transactions GROUP BY product_id) as prices
+          ON fixed_price.product_id = prices.product_id 
+
           WHERE 
         ` + mod + " GROUP BY db.fixed_price.id HAVING product_name IS NOT NULL";
 
@@ -580,7 +586,9 @@ module.exports = function routes(app, logger) {
         best_review.msg as best_review_review,
 
         worst_review.stars as worst_review_rating,
-        worst_review.msg as worst_review_review
+        worst_review.msg as worst_review_review,
+
+        prices.price as avg_sell_price
       FROM 
         db.auction 
       LEFT JOIN 
@@ -601,6 +609,11 @@ module.exports = function routes(app, logger) {
       ON products.id = auction.product_id
       LEFT JOIN users as bid_user
       ON bid_user.id = auction.bid_user_id
+
+      LEFT JOIN 
+          (SELECT product_id, AVG(price / quantity) as price FROM transactions GROUP BY product_id) as prices
+      ON auction.product_id = prices.product_id
+
       WHERE 
         is_finished = false AND 
         now() > start_date AND 
@@ -844,4 +857,18 @@ function getListingPrice(base_price, discount_price, discount_end, quantity) {
   } else if (curr > discount) {
     return base_price * quantity;
   }
+}
+
+
+function getAverageSalePrice(proudct_id) {
+  const sql = `
+    SELECT AVG(price / quantity) as price FROM transactions WHERE product_id = ? GROUP BY product_id
+  `;
+  pool.query(sql, [proudct_id], (err, results) => {
+    if (err) {
+      return undefined
+    } else {
+      return results[0].price
+    }
+  })
 }
