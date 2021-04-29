@@ -6,9 +6,9 @@ export const AppContext = React.createContext("app");
 
 export function useProvideAppContext() {
     // ENTER YOUR EC2 PUBLIC IP/URL HERE
-    const ec2_url = "";
+    const ec2_url = "http://ec2-3-101-47-78.us-west-1.compute.amazonaws.com:8000";
     // CHANGE THIS TO TRUE IF HOSTING ON EC2, MAKE SURE TO ADD IP/URL ABOVE
-    const ec2 = false;
+    const ec2 = true;
     // USE localhost OR ec2_url ACCORDING TO ENVIRONMENT
     const baseURL = ec2 ? ec2_url : "http://localhost:8000";
 
