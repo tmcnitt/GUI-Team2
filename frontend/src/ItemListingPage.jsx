@@ -90,7 +90,11 @@ export function ItemListingPage({ listing, setListing, refresh }) {
   let rating = null;
   if (listing.avglist_user_score) {
     rating = (
-      <p className="">Seller Average Rating: {listing.avglist_user_score.toFixed(1)}/5</p>
+      <p>Seller Average Rating: {listing.avglist_user_score.toFixed(1)}/5</p>
+    )
+  } else {
+    rating = (
+      <p>No reviews for this seller</p>
     )
   }
 
@@ -98,8 +102,8 @@ export function ItemListingPage({ listing, setListing, refresh }) {
   if (listing.best_review_rating) {
     reviews.push(
       <>
-        <p className="">Best Rating:{""} {listing.best_review_rating}/5</p>
-        <p className="">Best review:{""} {listing.best_review_review.slice(0, 40)}</p>
+        <p>Best Rating:{""} {listing.best_review_rating}/5</p>
+        <p>Best review:{""} {listing.best_review_review.slice(0, 40)}</p>
       </>
     )
   }
@@ -107,8 +111,8 @@ export function ItemListingPage({ listing, setListing, refresh }) {
   if (listing.worst_review_rating && listing.worst_review_rating != listing.best_review_rating) {
     reviews.push(
       <>
-        <p className="">Worst Rating:{""} {listing.worst_review_rating}/5</p>
-        <p className="">Worst review:{""} {listing.worst_review_review.slice(0, 40)}</p>
+        <p>Worst Rating:{""} {listing.worst_review_rating}/5</p>
+        <p>Worst review:{""} {listing.worst_review_review.slice(0, 40)}</p>
       </>
     )
   }

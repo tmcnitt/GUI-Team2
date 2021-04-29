@@ -51,6 +51,7 @@ export const SettingsModal = (props) => {
       <AuctionSettingsForm
         values={values}
         handleInputChange={handleInputChange}
+        defaultValues={defaultValues}
       ></AuctionSettingsForm>
     );
   }

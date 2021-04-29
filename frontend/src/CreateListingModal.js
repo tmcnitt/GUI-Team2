@@ -29,7 +29,7 @@ function AuctionForm({ values, handleInputChange }) {
                 </div>
 
                 <div className="col-9">
-                    <input type="datetime-local" name="end_date" id="end_date" onChange={handleInputChange} value={values.end_date} className="form-control" />
+                    <input type="datetime-local" min={values.start_date} name="end_date" id="end_date" onChange={handleInputChange} value={values.end_date} className="form-control" />
                 </div>
             </div >
 
