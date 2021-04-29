@@ -556,14 +556,14 @@ module.exports = function routes(app, logger) {
             } else {
               const sql = "SELECT description, end_date, bid_user_id, show_user_bid FROM auction WHERE list_user_id = ? AND id = ?";
               pool.query(sql, [user_id, id], (err, compare) => {
-                if (results[0].bid_user_id != results[0].list_user_id) {
+                if (results[0].bid_user_id && results[0].bid_user_id != results[0].list_user_id) {
                   if (compare[0].end_date.toString() != results[0].end_date.toString()) {
                     createNotification(req, res, results[0].bid_user_id, "An auction you were winning was extended!")
                   }
+                } else {
+                  res.status(200).send({ success: true, msg: "Auction updated" });
                 }
               })
-
-              res.status(200).send({ success: true, msg: "Auction updated" });
             }
           })
         }

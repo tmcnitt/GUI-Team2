@@ -13,7 +13,6 @@ export function ItemListingPage({ listing, setListing, refresh }) {
 
   let info;
   let price;
-  let discount;
   if (listing.auction_type == "Auction") {
     info = (
       <Auction
@@ -55,21 +54,11 @@ export function ItemListingPage({ listing, setListing, refresh }) {
       price = listing.discount_price;
     }
 
-    //Acount for discount
-    if (listing.discount_end) {
-      if (new Date(listing.discount_end) > new Date()) {
-        discount = (
-          <p className="lead">Discount End Date: {listing.discount_end}</p>
-        );
-      }
-    }
-
     price = (<>
       <h3>
         Price: <span className="badge bg-success">${price}</span>
       </h3>
-
-      { discount}</>
+    </>
     )
   }
 
@@ -101,7 +90,11 @@ export function ItemListingPage({ listing, setListing, refresh }) {
   let rating = null;
   if (listing.avglist_user_score) {
     rating = (
-      <p className="">Seller Average Rating: {listing.avglist_user_score.toFixed(1)}/5</p>
+      <p>Seller Average Rating: {listing.avglist_user_score.toFixed(1)}/5</p>
+    )
+  } else {
+    rating = (
+      <p>No reviews for this seller</p>
     )
   }
 
@@ -109,17 +102,17 @@ export function ItemListingPage({ listing, setListing, refresh }) {
   if (listing.best_review_rating) {
     reviews.push(
       <>
-        <p className="">Best Rating:{""} {listing.best_review_rating}/5</p>
-        <p className="">Best review:{""} {listing.best_review_review.slice(0, 40)}</p>
+        <p>Best Rating:{""} {listing.best_review_rating}/5</p>
+        <p>Best review:{""} {listing.best_review_review.slice(0, 40)}</p>
       </>
     )
   }
 
-  if (listing.worst_review_rating) {
+  if (listing.worst_review_rating && listing.worst_review_rating != listing.best_review_rating) {
     reviews.push(
       <>
-        <p className="">Worst Rating:{""} {listing.worst_review_rating}/5</p>
-        <p className="">Worst review:{""} {listing.worst_review_review.slice(0, 40)}</p>
+        <p>Worst Rating:{""} {listing.worst_review_rating}/5</p>
+        <p>Worst review:{""} {listing.worst_review_review.slice(0, 40)}</p>
       </>
     )
   }
@@ -147,6 +140,7 @@ export function ItemListingPage({ listing, setListing, refresh }) {
           <div className="row">
             <div className="col-4">
               <img
+                className="img-thumbnail"
                 src={baseURL + "/products/" + listing.product_id}
               ></img>
             </div>

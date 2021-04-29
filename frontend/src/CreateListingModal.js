@@ -29,7 +29,7 @@ function AuctionForm({ values, handleInputChange }) {
                 </div>
 
                 <div className="col-9">
-                    <input type="datetime-local" name="end_date" id="end_date" onChange={handleInputChange} value={values.end_date} className="form-control" />
+                    <input type="datetime-local" min={values.start_date} name="end_date" id="end_date" onChange={handleInputChange} value={values.end_date} className="form-control" />
                 </div>
             </div >
 
@@ -170,7 +170,7 @@ export function CreateListingModal({ show, setShow, refresh }) {
     const modalRef = useRef()
 
     useEffect(() => {
-        setModal(new Modal(modalRef.current))
+        setModal(new Modal(modalRef.current, { backdrop: 'static' }))
     }, [])
 
     useEffect(() => {
@@ -189,14 +189,14 @@ export function CreateListingModal({ show, setShow, refresh }) {
     }
     return (
         <>
-            <CreateProductModal refresh={refresh} products={products} setProducts={setProducts} />
+            <CreateProductModal refresh={refresh} products={products} setProducts={setProducts} setShow={setShow} />
 
-            <div ref={modalRef} className="modal fade modal-fullscreen-md-down" id="listingModal" tabIndex="-1" aria-labelledby="listingModalLabel" aria-hidden="true">
+            <div ref={modalRef} className="modal fade modal-fullscreen-md-down" data-backdrop="static" id="listingModal" tabIndex="-1" aria-labelledby="listingModalLabel" aria-hidden="true">
                 <div className="modal-dialog">
                     <div className="modal-content">
                         <div className="modal-header">
                             <h5 className="modal-title" id="listingModalLabel">Create Listing</h5>
-                            <button type="button" className="btn-close" onClick={() => setShow(false)}></button>
+                            <button type="button" className="btn-close" data-bs-dismiss="modal" onClick={() => setShow(false)}></button>
                         </div>
                         <div className="modal-body">
                             {banner}
@@ -249,7 +249,7 @@ export function CreateListingModal({ show, setShow, refresh }) {
                         </div>
                         <div className="modal-footer">
                             <button type="button" className="btn btn-secondary" data-bs-dismiss="modal" onClick={() => setShow(false)}>Close</button>
-                            <button type="button" className="btn btn-primary" data-bs-dismiss="modal" onClick={() => submit()} >Create</button>
+                            <button type="button" className="btn btn-primary" onClick={() => submit()} >Create</button>
                         </div>
                     </div >
                 </div >

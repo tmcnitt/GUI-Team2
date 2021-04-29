@@ -1,7 +1,7 @@
 import React from "react";
 import { dateToISOLikeButLocal } from "./utils";
 
-export function AuctionSettingsForm({ values, handleInputChange }) {
+export function AuctionSettingsForm({ defaultValues, values, handleInputChange }) {
   const setNow = () => {
     handleInputChange({
       target: { name: "start_date", value: dateToISOLikeButLocal(new Date()) },
@@ -49,6 +49,7 @@ export function AuctionSettingsForm({ values, handleInputChange }) {
             name="end_date"
             id="end_date"
             onChange={handleInputChange}
+            min={defaultValues.end_date}
             value={values.end_date}
             className="form-control"
           />

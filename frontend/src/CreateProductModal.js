@@ -4,7 +4,7 @@ import axios from "axios"
 import { capitalize } from './utils'
 
 
-export function CreateProductModal({ products, setProducts }) {
+export function CreateProductModal({ products, setProducts, setShow }) {
     const { baseURL } = useContext(AppContext);
 
     const [name, setName] = useState("")
@@ -45,7 +45,7 @@ export function CreateProductModal({ products, setProducts }) {
                 <div className="modal-content">
                     <div className="modal-header">
                         <h5 className="modal-title" id="productModalLabel">Create Product</h5>
-                        <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close" onClick={() => setShow(false)}></button>
                     </div>
                     <div className="modal-body">
                         <form>
@@ -70,7 +70,7 @@ export function CreateProductModal({ products, setProducts }) {
 
                     </div>
                     <div className="modal-footer">
-                        <button type="button" className="btn btn-secondary" data-bs-dismiss="modal" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#listingModal">Close</button>
+                        <button type="button" className="btn btn-secondary" data-bs-dismiss="modal" data-bs-dismiss="modal" onClick={() => setShow(false)}>Close</button>
                         <button type="button" className="btn btn-primary" data-bs-dismiss="modal" data-bs-toggle="modal" data-bs-target="#listingModal" onClick={() => createProduct()}>Create</button>
                     </div>
                 </div>

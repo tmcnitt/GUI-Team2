@@ -1,7 +1,8 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import axios from "axios";
 import { AppContext } from "./AppContext.js";
 import { axiosJWTHeader } from "./utils";
+import { timeLeft } from "./utils";
 
 export const Fixed = (props) => {
   let [quantity, setQuantity] = useState(0);
@@ -61,6 +62,38 @@ export const Fixed = (props) => {
     </button>
   );
 
+  let [remain, setRemain] = useState(null);
+
+  useEffect(() => {
+    if (!props.listing.discount_end) {
+      return
+    }
+
+    if (new Date(props.listing.discount_end) < new Date()) {
+      return
+    }
+
+    setRemain(timeLeft(props.listing.discount_end));
+    const timer = setTimeout(() => {
+      setRemain(timeLeft(props.listing.discount_end));
+
+      if (new Date(props.listing.discount_end) < new Date()) {
+        setRemain(null)
+      }
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  });
+
+  let discount = null
+
+  if (remain) {
+    discount = (
+      <p className="lead text-center">Discount Time Remaining: {remain}</p>
+    )
+  }
+
+
   if (props.listing.quantity > 1) {
     qty = <p className="lead">Quantity Left: {props.listing.quantity}</p>;
     buy = (
@@ -100,6 +133,7 @@ export const Fixed = (props) => {
 
   return (
     <>
+      {discount}
       <div className="d-grid">{buy}</div>
     </>
   );

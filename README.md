@@ -1,4 +1,5 @@
 # Team 2 S21 GUI repo
+See live here http://ec2-3-101-47-78.us-west-1.compute.amazonaws.com:3000/
 #### A sample project using docker-compose with Node and React.JS containers.
 #### Also uses a MySQL DBaaS like AWS RDS or GCloud CloudSQL.
 #### This project is meant to give you an understanding of how to formulate your docker development environment for developing web apps using React.JS, Node.JS, and a cloud SQL DBaaS like AWS RDS.

@@ -15,6 +15,7 @@ export const Auction = (props) => {
 
     if (new Date(props.listing.end_date) < new Date()) {
       props.setListing(null);
+      props.refresh()
     }
 
     return () => clearTimeout(timer);
