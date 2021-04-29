@@ -1,3 +1,4 @@
+process.env.TZ = 'America/Chicago'
 require("dotenv").config();
 const express = require("express");
 const bodyParser = require("body-parser");

@@ -19,10 +19,15 @@ function Transaction({ transaction, review }) {
     let review_of_seller = (transaction.purchaser_reviews_stars || '-') + "/5"
 
 
-    if (transaction.is_purchaser && !transaction.purchaser_reviews_stars) {
-        review_of_seller = (
-            <button className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#reviewModal" onClick={() => review(transaction.list_user_id)}>Leave Review</button>
-        )
+    if (transaction.is_purchaser) {
+        if (!transaction.purchaser_reviews_stars) {
+            review_of_seller = (
+                <button className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#reviewModal" onClick={() => review(transaction.list_user_id)}>Leave Review</button>
+            )
+        } else {
+
+        }
+
     }
     if (!transaction.is_purchaser && !transaction.lister_reviews_stars) {
         review_of_buyer = (
