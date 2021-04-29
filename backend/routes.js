@@ -510,7 +510,7 @@ module.exports = function routes(app, logger) {
               msg: "Error deleting auctions",
             });
           } else {
-            if (results[0].bid_user_id) {
+            if (results[0] && results[0].bid_user_id) {
               createNotification(req, res, results[0].bid_user_id, "An auction you were winning was cancelled!")
               res.status(200).send({ success: true, msg: "Deleted auction", });
             }
